@@ -1313,22 +1313,33 @@ async function processarRequisicao() {
       throw new Error("Não foi possível acessar a aba ativa.");
     }
 
-    if (tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) {
-      throw new Error("Páginas internas do Chrome (chrome://) não permitem injeção de scripts por segurança.");
+    // 4. Executar injeção no DOM da aba ativa (se não for página protegida do Chrome)
+    let pageContentRaw = "";
+    const isProtectedChromePage = tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://');
+
+    if (!isProtectedChromePage) {
+      try {
+        const injectionResults = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: extractCleanDOMText
+        });
+        pageContentRaw = injectionResults[0]?.result || "";
+      } catch (err) {
+        console.warn("Aviso ao extrair DOM da página:", err);
+      }
     }
 
-    // 4. Executar injeção no DOM da aba ativa
-    const injectionResults = await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: extractCleanDOMText
-    });
-
-    const pageContentRaw = injectionResults[0]?.result || "";
-    
-    if (!pageContentRaw) {
-      pageInfoBadge.textContent = "Sem conteúdo textual extraído";
+    if (isProtectedChromePage) {
+      pageInfoBadge.textContent = "Aba de sistema (foco nos anexos)";
+    } else if (!pageContentRaw) {
+      pageInfoBadge.textContent = "Sem texto extraído da página";
     } else {
-      pageInfoBadge.textContent = `${Math.min(pageContentRaw.length, MAX_PAGE_CHARS)} chars lidos`;
+      pageInfoBadge.textContent = `${Math.min(pageContentRaw.length, MAX_PAGE_CHARS)} chars lidos da página`;
+    }
+
+    // Se a aba for protegida do Chrome E o usuário NÃO tiver enviado nem texto nem anexos, emite o erro informativo
+    if (isProtectedChromePage && !userInput && currentAttachedFiles.length === 0) {
+      throw new Error("Páginas internas do Chrome (chrome://) não permitem injeção de scripts. Para fazer uma consulta nesta aba, digite sua pergunta ou anexe um arquivo.");
     }
 
     // 5. Truncamento Seguro
