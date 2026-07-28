@@ -1164,6 +1164,33 @@ function appendMessageUI(text, typeClass, saveToStorage = true) {
     } else {
       msgDiv.textContent = text;
     }
+
+    // Se for uma resposta da IA e for longa (> 500 caracteres), adicionar link/botão para baixar o arquivo .md
+    if (!typeClass.includes('loading') && text.length > 500) {
+      const downloadFooter = document.createElement('div');
+      downloadFooter.className = 'md-download-footer';
+      
+      const downloadBtn = document.createElement('button');
+      downloadBtn.className = 'md-download-btn';
+      downloadBtn.title = 'Baixar esta resposta em formato Markdown (.md)';
+      downloadBtn.innerHTML = '📥 <span>Baixar resposta (.md)</span>';
+      
+      downloadBtn.addEventListener('click', () => {
+        const blob = new Blob([text], { type: 'text/markdown;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const timestamp = new Date().toISOString().slice(0, 10);
+        a.download = `resposta_assistente_${timestamp}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+
+      downloadFooter.appendChild(downloadBtn);
+      msgDiv.appendChild(downloadFooter);
+    }
   }
   
   const tempId = 'msg-' + Date.now() + Math.random().toString(36).substr(2, 5);
