@@ -1042,12 +1042,14 @@ async function baixarArquivoUnitario(file) {
           // Se falhar por autenticação/CORS, executa o clique via DOM na página
           if (isDomClick) {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            if (tab && tab.id) {
-              await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                func: triggerDomDownloadInPage,
-                args: [file]
-              });
+            if (tab && tab.id && tab.url && !tab.url.startsWith('chrome://') && !tab.url.startsWith('chrome-extension://')) {
+              try {
+                await chrome.scripting.executeScript({
+                  target: { tabId: tab.id },
+                  func: triggerDomDownloadInPage,
+                  args: [file]
+                });
+              } catch (e) {}
             }
           }
         }
@@ -1065,12 +1067,14 @@ async function baixarArquivoUnitario(file) {
     // 2. Se for um anexo dinâmico do Gmail sem URL estática pública
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab && tab.id) {
+      if (tab && tab.id && tab.url && !tab.url.startsWith('chrome://') && !tab.url.startsWith('chrome-extension://')) {
         await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           func: triggerDomDownloadInPage,
           args: [file]
         });
+      } else {
+        console.warn("Não é possível executar script em abas protegidas do Chrome (chrome://).");
       }
     } catch (e) {
       console.warn("Erro ao simular clique no DOM para download:", e);
