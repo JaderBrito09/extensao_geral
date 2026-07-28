@@ -29,14 +29,11 @@ Assistente analítico inteligente para o Google Chrome que utiliza a API do **Go
 
 ## 📚 Documentação do Projeto
 
-Toda a documentação técnica e arquitetural do projeto está organizada na pasta [`docs/`](file:///Users/jader/Meu%20Drive/extensao_geral/docs):
+Toda a documentação técnica e arquitetural do projeto está centralizada na pasta [`docs/`](file:///Users/jader/Meu%20Drive/extensao_geral/docs):
 
 | Documento | Descrição |
 | :--- | :--- |
-| 📄 [ESPECIFICACAO_PRODUTO.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/ESPECIFICACAO_PRODUTO.md) | Especificação de Produto (PRD), Arquitetura, Apps Script Proxy e Diagramas |
-| ✍️ [SKILLS_GUIDE.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/SKILLS_GUIDE.md) | Guia de Habilidades em Markdown com orientações iniciais e bases do GitHub |
-| 🛠️ [SETUP_GUIDE.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/SETUP_GUIDE.md) | Manual Prático de Configuração e Implantação |
-| 🏛️ [ARCHITECTURE.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/ARCHITECTURE.md) | Registro de Decisões Arquiteturais (ADRs) |
-| 📋 [USER_STORIES.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/USER_STORIES.md) | Product Backlog Ágil com Histórias de Usuário |
-| 📋 [BACKLOG_MELHORIAS.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/BACKLOG_MELHORIAS.md) | Lista de Sprints e Melhorias de Desenvolvimento |
-| 🔒 [SECURITY_PRIVACY.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/SECURITY_PRIVACY.md) | Justificativas de Permissões V3 e Privacidade |
+| 🛠️ [SETUP_E_INFRAESTRUTURA.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/SETUP_E_INFRAESTRUTURA.md) | Manual de Instalação, Deploy do Apps Script Proxy, Planilha de Controle e Tabela Oficial de Parâmetros. |
+| 🏗️ [ARQUITETURA_E_ESPECIFICACAO.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/ARQUITETURA_E_ESPECIFICACAO.md) | Arquitetura técnica, especificações de produto, diagramas de fluxo, ADRs de design e políticas de privacidade. |
+| 📋 [BACKLOG_E_USER_STORIES.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/BACKLOG_E_USER_STORIES.md) | Planejamento de produto, Histórias de Usuário (User Stories) e acompanhamento de Sprints (1 a 12). |
+| 💡 [GUIA_DE_SKILLS.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/GUIA_DE_SKILLS.md) | Guia do criador de Habilidades, sintaxe Markdown, manifesto `skills.json` e integração com GitHub. |
