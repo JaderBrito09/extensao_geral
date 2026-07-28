@@ -172,6 +172,12 @@ if (selectEl) {
       return;
     }
 
+    // Se o histórico contiver apenas a mensagem de boas-vindas inicial, limpa para retirar a mensagem de boas-vindas
+    const welcomeMsg = historyEl.querySelector('.message.ai-msg');
+    if (welcomeMsg && historyEl.children.length === 1 && welcomeMsg.innerHTML.includes('Selecione uma Habilidade')) {
+      historyEl.innerHTML = '';
+    }
+
     const skill = await buscarSkillNoGithub(selectedKey);
     if (skill && skill.userGuidance) {
       appendMessageUI(`💡 **Habilidade Selecionada: ${skill.label}**\n\n${skill.userGuidance}`, 'ai-msg', false);
@@ -651,6 +657,9 @@ function exibirPerfilLogado(profile) {
   mainAppScreen.classList.remove('hidden');
   loginScreen.classList.add('hidden');
   if (accessDeniedScreen) accessDeniedScreen.classList.add('hidden');
+
+  // Sempre que o usuário loga ou entra na tela principal, inicie com uma nova conversa
+  iniciarNovaConversa(false);
 }
 
 function exibirTelaLogin(errorMessage = null) {
