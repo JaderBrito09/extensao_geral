@@ -6,17 +6,25 @@ Este guia orienta especialistas de domínio e desenvolvedores sobre como criar, 
 
 ## 🏗️ Estrutura do Repositório Exclusivo de Skills (`assistente-jorge-skills`)
 
-Todas as habilidades especialistas residem no repositório exclusivo do GitHub **`JaderBrito09/assistente-jorge-skills`**.
+Todas as habilidades residentes no repositório exclusivo do GitHub **`JaderBrito09/assistente-jorge-skills`** seguem uma estrutura modular, onde cada **Skill possui sua própria pasta** e pode conter **subpastas auxiliares** acionáveis (scripts, bases de conhecimento, referências):
 
-```
+```text
 assistente-jorge-skills/
-├── skills.json             ⚙️ Catálogo Oficial de Habilidades
-└── skills/                 📁 Arquivos Markdown de Habilidades
-    ├── geral.md            💡 Análise e Consulta Livre
-    ├── juridico.md         ⚖️ Análise Contratual e Riscos Legais
-    ├── codigo.md           💻 Auditoria de Código e Arquitetura
-    ├── seo.md              🚀 Análise de SEO e Conteúdo
-    └── traducao.md         🌐 Tradução e Adaptação Cultural
+├── skills.json                   ⚙️ Catálogo Oficial de Habilidades
+└── skills/                       📁 Diretório Principal de Habilidades
+    ├── geral/                    💡 Pasta Exclusiva da Skill
+    │   ├── SKILL.md              📜 Instruções Principais e System Prompt
+    │   ├── scripts/              🐍 Scripts/automações executados pela skill
+    │   ├── references/           📚 Base de conhecimento/documentos auxiliares
+    │   └── resources/            🎨 Assets, templates ou exemplos
+    ├── juridico/
+    │   ├── SKILL.md
+    │   └── references/           ⚖️ Modelos contratuais e base de leis
+    ├── codigo/
+    │   ├── SKILL.md
+    │   └── scripts/              💻 Scripts de linter e auditoria
+    └── seo/
+        └── SKILL.md
 ```
 
 ---
@@ -35,14 +43,14 @@ O arquivo `skills.json` registra os metadados de cada habilidade disponível:
       "slug": "geral",
       "name": "Análise e Consulta Livre (Geral)",
       "category": "Geral",
-      "file": "skills/geral.md"
+      "file": "skills/geral/SKILL.md"
     },
     {
       "id": "SKILL-JURIDICO-001",
       "slug": "juridico",
       "name": "Revisão de Termos e Riscos (Jurídico)",
       "category": "Jurídico",
-      "file": "skills/juridico.md"
+      "file": "skills/juridico/SKILL.md"
     }
   ]
 }
@@ -50,11 +58,11 @@ O arquivo `skills.json` registra os metadados de cada habilidade disponível:
 
 ---
 
-## 📝 Especificação do Arquivo Markdown (`.md`)
+## 📝 Especificação do Arquivo Markdown (`SKILL.md`)
 
-Cada habilidade deve conter exatamente as 3 seções obrigatórias estruturadas abaixo:
+Cada habilidade deve conter seu arquivo principal `SKILL.md` dentro de sua respectiva pasta, contendo exatamente as 3 seções obrigatórias estruturadas abaixo:
 
-### Exemplo Completo ([skills/geral.md](file:///Users/jader/Meu%20Drive/extensao_geral/skills-repo/skills/geral.md)):
+### Exemplo Completo ([skills/geral/SKILL.md](file:///Users/jader/Meu%20Drive/extensao_geral/skills-repo/skills/geral/SKILL.md)):
 
 ```markdown
 # Skill: Análise e Consulta Livre (Geral)
@@ -87,7 +95,8 @@ Quando o usuário seleciona uma habilidade no dropdown:
 
 ## 🔄 Como Adicionar uma Nova Habilidade
 
-1. Crie o novo arquivo Markdown em `skills/{nome_habilidade}.md`.
-2. Adicione a entrada no arquivo `skills.json` com um `id` imutável (ex: `SKILL-FINANCEIRO-001`).
-3. Faça commit e push para o repositório `assistente-jorge-skills` no GitHub.
-4. A nova habilidade ficará automaticamente disponível para todos os usuários autorizados!
+1. Crie a nova pasta em `skills/{nome_habilidade}/`.
+2. Crie o arquivo `SKILL.md` principal e, se necessário, subpastas como `scripts/` ou `references/`.
+3. Adicione a entrada no arquivo `skills.json` apontando para `skills/{nome_habilidade}/SKILL.md` com um `id` imutável.
+4. Faça commit e push para o repositório `assistente-jorge-skills` no GitHub.
+5. A nova habilidade ficará automaticamente disponível para todos os usuários autorizados!
