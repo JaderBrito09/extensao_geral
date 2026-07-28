@@ -1074,10 +1074,27 @@ async function baixarArquivoUnitario(file) {
           args: [file]
         });
       } else {
-        console.warn("Não é possível executar script em abas protegidas do Chrome (chrome://).");
+        appendMessageUI(
+          `🔒 **Aba do Chrome Protegida (` + (tab?.url || 'chrome://') + `)**\n\n` +
+          `O Chrome não permite a execução automática de scripts de download em abas de sistema ou de configurações (` + (tab?.url || 'chrome://') + `).\n\n` +
+          `💡 **Como proceder:**\n` +
+          `1. Acesse a aba da página onde o documento/e-mail está aberto (ex: Gmail).\n` +
+          `2. Baixe o arquivo **${filename}** diretamente pela página.\n` +
+          `3. Clique no botão de **📎 Anexo** abaixo ou arraste o arquivo para este chat para incluí-lo na análise!`,
+          'ai-msg',
+          false
+        );
       }
     } catch (e) {
-      console.warn("Erro ao simular clique no DOM para download:", e);
+      appendMessageUI(
+        `⚠️ **Download Automático Indisponível para ${filename}**\n\n` +
+        `Não foi possível acionar o download automático na página ativa.\n\n` +
+        `💡 **Como proceder:**\n` +
+        `1. Faça o download manual do arquivo **${filename}** diretamente na página.\n` +
+        `2. Clique no botão de **📎 Anexo** no chat para enviar o documento ao assistente.`,
+        'ai-msg',
+        false
+      );
     }
   }
 }
