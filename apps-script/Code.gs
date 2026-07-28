@@ -35,8 +35,13 @@ function doPost(e) {
     if (!accessCheck.authorized) {
       return jsonResponse({ 
         error: "ACESSO_NEGADO", 
-        message: accessCheck.message || "Seu e-mail não possui autorização para utilizar a extensão." 
+        message: accessCheck.message || "Usuário não autorizado a acessar o assistente. Favor contatar o administrador." 
       }, 403);
+    }
+
+    // Se for apenas uma verificação de status inicial de permissão, retorna sucesso imediato
+    if (data.action === "check_user_status") {
+      return jsonResponse({ status: "AUTHORIZED", userEmail: userEmail }, 200);
     }
 
     // 2. Recuperar a Chave da API do Gemini das Script Properties

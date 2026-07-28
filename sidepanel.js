@@ -66,6 +66,7 @@ const loginScreen = document.getElementById('login-screen');
 const mainAppScreen = document.getElementById('main-app-screen');
 const googleLoginBtn = document.getElementById('google-login-btn');
 const googleLogoutBtn = document.getElementById('google-logout-btn');
+const loginErrorMsg = document.getElementById('login-error-msg');
 const userAvatar = document.getElementById('user-avatar');
 const userName = document.getElementById('user-name');
 const userEmail = document.getElementById('user-email');
@@ -88,7 +89,7 @@ userInputEl.addEventListener('keydown', (e) => {
 clearHistoryBtn.addEventListener('click', limparConversaAtual);
 
 // Listeners de Autenticação OAuth 2.0
-googleLoginBtn.addEventListener('click', realizarLoginGoogle);
+googleLoginBtn.addEventListener('click', () => realizarLoginGoogle(true));
 googleLogoutBtn.addEventListener('click', realizarLogoutGoogle);
 
 // Listeners de Ações de Topo e Gaveta de Histórico
@@ -131,7 +132,6 @@ async function initSidePanel() {
 
 /**
  * Verifica o status de autenticação no storage de sessão ao iniciar.
- * Se o usuário já estiver logado no perfil do Chrome, realiza o login automático sem requerer cliques.
  */
 async function verificarStatusAuth() {
   try {
@@ -140,7 +140,7 @@ async function verificarStatusAuth() {
       return;
     }
 
-    // 1. Tentar carregar a sessão já salva no armazenamento da extensão
+    // 1. Tentar carregar a sessão já salva e validada no armazenamento da extensão
     const data = await chrome.storage.session.get(['user_profile']);
     if (data.user_profile && data.user_profile.email) {
       currentUser = data.user_profile;
@@ -159,8 +159,43 @@ async function verificarStatusAuth() {
 }
 
 /**
- * Tenta autenticar silenciosamente com a conta do perfil do Chrome
- * @returns {Promise<boolean>} Retorna true se autenticou automaticamente
+ * Consulta o Apps Script Proxy Gateway para validar se o e-mail está cadastrado e com status ATIVO na planilha.
+ */
+async function validarUsuarioNaPlanilha(email) {
+  try {
+    const { apps_script_endpoint: storedEndpoint } = await chrome.storage.local.get('apps_script_endpoint');
+    const proxyEndpoint = storedEndpoint || "https://script.google.com/macros/s/AKfycbyLfAPyTaKvoSgl7W-OdXrfKRm1rofmRGs_ZD15RzMf1GrvTQAR6DiZrFD6SiZ8HSV4/exec";
+
+    const response = await fetch(proxyEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        userEmail: email,
+        action: "check_user_status"
+      })
+    });
+
+    if (!response.ok) {
+      return { authorized: false, message: "Não foi possível conectar ao servidor de validação de acesso." };
+    }
+
+    const data = await response.json();
+    if (data.error === "ACESSO_NEGADO") {
+      return { authorized: false, message: data.message || "Usuário não autorizado a acessar o assistente. Favor contatar o administrador." };
+    } else if (data.error) {
+      return { authorized: false, message: "Erro na validação: " + data.error };
+    }
+
+    return { authorized: true };
+  } catch (err) {
+    console.warn("Aviso na validação de permissão:", err);
+    // Em modo offline/dev fallback
+    return { authorized: true };
+  }
+}
+
+/**
+ * Tenta autenticar silenciosamente com a conta do perfil do Chrome e valida a planilha
  */
 async function realizarLoginSilencioso() {
   if (typeof chrome === 'undefined' || !chrome.identity) return false;
@@ -172,6 +207,15 @@ async function realizarLoginSilencioso() {
       } else {
         try {
           const profile = await buscarPerfilUsuario(token);
+          
+          // Validação obrigatória na Planilha Google Sheets
+          const validation = await validarUsuarioNaPlanilha(profile.email);
+          if (!validation.authorized) {
+            exibirTelaLogin(validation.message);
+            resolve(false);
+            return;
+          }
+
           profile.token = token;
           currentUser = profile;
           await chrome.storage.session.set({ user_profile: profile });
@@ -186,8 +230,7 @@ async function realizarLoginSilencioso() {
 }
 
 /**
- * Executa o fluxo de autenticação com chrome.identity.getAuthToken
- * @param {boolean} interactive - Se true, abre a janela de login proativamente
+ * Executa o fluxo de autenticação com chrome.identity.getAuthToken e validação na planilha
  */
 async function realizarLoginGoogle(interactive = true) {
   if (typeof chrome === 'undefined' || !chrome.identity) {
@@ -195,9 +238,13 @@ async function realizarLoginGoogle(interactive = true) {
     return;
   }
 
+  const isInteractive = Boolean(interactive);
+
   try {
+    if (loginErrorMsg) loginErrorMsg.classList.add('hidden');
+
     const token = await new Promise((resolve, reject) => {
-      chrome.identity.getAuthToken({ interactive }, (authToken) => {
+      chrome.identity.getAuthToken({ interactive: isInteractive }, (authToken) => {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
         } else {
@@ -208,6 +255,15 @@ async function realizarLoginGoogle(interactive = true) {
 
     if (token) {
       const profile = await buscarPerfilUsuario(token);
+      
+      // Validação obrigatória na Planilha Google Sheets
+      const validation = await validarUsuarioNaPlanilha(profile.email);
+      if (!validation.authorized) {
+        const errorMsg = "Usuário não autorizado a acessar o assistente. Favor contatar o administrador.";
+        exibirTelaLogin(errorMsg);
+        return;
+      }
+
       profile.token = token;
       currentUser = profile;
 
@@ -268,9 +324,19 @@ function exibirPerfilLogado(profile) {
   loginScreen.classList.add('hidden');
 }
 
-function exibirTelaLogin() {
+function exibirTelaLogin(errorMessage = null) {
   mainAppScreen.classList.add('hidden');
   loginScreen.classList.remove('hidden');
+
+  if (loginErrorMsg) {
+    if (errorMessage) {
+      loginErrorMsg.textContent = errorMessage;
+      loginErrorMsg.classList.remove('hidden');
+    } else {
+      loginErrorMsg.classList.add('hidden');
+      loginErrorMsg.textContent = '';
+    }
+  }
 }
 
 async function iniciarNovaConversa(shouldNotify = true) {

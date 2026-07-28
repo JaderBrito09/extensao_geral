@@ -679,6 +679,22 @@ textarea:focus {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.auth-error-msg {
+  background: #fce8e6;
+  color: #d93025;
+  border: 1px solid #fad2cf;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  width: 100%;
+}
+
+.auth-error-msg.hidden {
+  display: none !important;
+}
+
 /* Tela 2: Aplicação Principal */
 .main-app-screen {
   display: flex;
