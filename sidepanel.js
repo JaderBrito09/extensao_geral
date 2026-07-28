@@ -1155,9 +1155,67 @@ async function handleFileSelection(e) {
 function readFileContent(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (evt) => resolve(evt.target.result);
-    reader.onerror = (err) => reject(err);
-    reader.readAsText(file);
+
+    if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+      reader.onload = (evt) => {
+        try {
+          const buffer = evt.target.result;
+          const bytes = new Uint8Array(buffer);
+          let rawText = '';
+          
+          // Converte bytes para string de caracteres preservando texto
+          const chunkSize = 8192;
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            const chunk = bytes.subarray(i, i + chunkSize);
+            rawText += String.fromCharCode.apply(null, chunk);
+          }
+
+          // Extração de blocos de texto /BT ... /ET e strings (Tj / TJ) típicos do formato PDF
+          const textBlocks = [];
+          const btRegex = /\/BT[\s\S]*?\/ET/g;
+          let match;
+          while ((match = btRegex.exec(rawText)) !== null) {
+            const block = match[0];
+            // Capturar conteúdo dentro de parênteses (ex: (Texto aqui) Tj ou [(Texto) 10 (Aqui)] TJ)
+            const stringMatches = block.match(/\(([^()\\]|\\[\s\S])*\)/g);
+            if (stringMatches) {
+              const cleaned = stringMatches
+                .map(s => s.slice(1, -1).replace(/\\([()])/g, '$1'))
+                .join(' ');
+              if (cleaned.trim().length > 0) {
+                textBlocks.push(cleaned.trim());
+              }
+            }
+          }
+
+          let extractedText = textBlocks.join('\n');
+
+          // Fallback: Se não encontrou blocos /BT ... /ET formais, filtra caracteres imprimíveis e ASCII da stream
+          if (!extractedText || extractedText.trim().length < 20) {
+            const printableMatches = rawText.match(/[\x20-\x7E\xA0-\xFF\n\r\t]{4,}/g);
+            if (printableMatches) {
+              extractedText = printableMatches
+                .filter(str => !str.includes('<<') && !str.includes('>>') && !str.includes('endobj') && !str.includes('stream'))
+                .join(' ');
+            }
+          }
+
+          if (extractedText && extractedText.trim().length > 10) {
+            resolve(`[CONTEÚDO EXTRAÍDO DO PDF: ${file.name}]\n` + extractedText.trim());
+          } else {
+            resolve(`[ARQUIVO PDF ANEXADO: ${file.name}]\nEste PDF aparenta conter imagens digitalizadas (scaneadas) ou fontes codificadas de forma binária que não possuem camada de texto nativa extraível.`);
+          }
+        } catch (err) {
+          reject(err);
+        }
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.onload = (evt) => resolve(evt.target.result);
+      reader.onerror = (err) => reject(err);
+      reader.readAsText(file);
+    }
   });
 }
 
