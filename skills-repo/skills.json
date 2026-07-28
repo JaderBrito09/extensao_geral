@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "description": "Catálogo Oficial de Habilidades do Assistente do Jorge",
+  "skills": [
+    {
+      "id": "SKILL-GERAL-001",
+      "slug": "geral",
+      "name": "Análise e Consulta Livre (Geral)",
+      "category": "Geral",
+      "file": "skills/geral.md"
+    }
+  ]
+}

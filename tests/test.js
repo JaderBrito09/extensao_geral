@@ -119,4 +119,3 @@ assert(sidepanelCode.includes('chat_sessions'), "Histórico de sessões de conve
 
 console.log(`\n=== RESULTADO FINAL DE TESTES: ${passed} Passaram, ${failed} Falharam ===`);
 if (failed > 0) process.exit(1);
-

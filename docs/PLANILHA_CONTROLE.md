@@ -22,9 +22,17 @@ Crie uma aba com o nome **`Usuarios`** e insira o cabeçalho exatamente na **Lin
 
 | E-mail | Nome | Status | Skills Permitidas | Observações |
 | :--- | :--- | :---: | :--- | :--- |
-| `jaderbrito.fernandes@sefaz.mt.gov.br` | Jader Brito | `ATIVO` | `ALL` | Administrador principal |
-| `joao.silva@sefaz.mt.gov.br` | João Silva | `ATIVO` | `geral, juridico` | Acesso parcial |
-| `maria.souza@empresa.com` | Maria Souza | `INATIVO` | `ALL` | Conta temporariamente inativa |
+| `jaderbrito.fernandes@sefaz.mt.gov.br` | Jader Brito | `ATIVO` | `ALL` | Administrador (acesso a todas as skills) |
+| `joao.silva@sefaz.mt.gov.br` | João Silva | `ATIVO` | `CAT:Jurídico, SKILL-GERAL-001` | Acesso às skills da categoria Jurídico + Geral |
+| `maria.souza@empresa.com` | Maria Souza | `ATIVO` | `SKILL-GERAL-001` | Acesso exclusivo por ID de skill |
+| `pedro.lima@empresa.com` | Pedro Lima | `INATIVO` | `ALL` | Conta temporariamente inativa |
+
+---
+
+### 🛡️ Sintaxe Suportada na Coluna `Skills Permitidas`:
+- **`ALL` ou `*`**: Concede acesso total a todas as habilidades cadastradas no manifesto `skills.json`.
+- **`SKILL-ID`** (ex: `SKILL-GERAL-001`): Liberação específica pelo ID imutável da habilidade.
+- **`CAT:<Nome>`** (ex: `CAT:Jurídico`, `CAT:Dev`): Liberação automática por Categoria/Grupo de habilidades.
 
 ---
 

@@ -151,7 +151,7 @@ Você pode criar um arquivo de configurações locais chamado `env.json` na raiz
 > ```
 
 ### 2. 📄 Na Documentação do Projeto: Arquivo `config.md` (Para Metadados Públicos)
-Informações **não sensíveis** (como o ID do Projeto no GCP `ext-geral-oauth-2026` e o ID da Extensão `chrome://extensions/`) podem ficar registradas diretamente na tabela de parâmetros do [`config.md`](file:///Users/jader/Meu%20Drive/extensao_geral/config.md).
+Informações **não sensíveis** (como o ID do Projeto no GCP `ext-geral-oauth-2026` e o ID da Extensão `chrome://extensions/`) podem ficar registradas diretamente na tabela de parâmetros do [`docs/config.md`](file:///Users/jader/Meu%20Drive/extensao_geral/docs/config.md).
 
 ---
 
@@ -167,7 +167,30 @@ Preencha os valores abaixo para referência da equipe de desenvolvimento:
 | **Conta GCP Administradora** | `jaderbrito.fernandes@sefaz.mt.gov.br` | Conta proprietária do projeto GCP |
 | **ID da Extensão no Chrome** | `iobhoockjdkooadefbhlolggdlikdoke` | ID alfanumérico em `chrome://extensions/` |
 | **OAuth Client ID** | `1030154870179-60e6j1amgkpn2apsj5i0nf6lurs58k54.apps.googleusercontent.com` | ID da credencial para o `manifest.json` |
-| **Endpoint do Apps Script Proxy** | `https://script.google.com/macros/s/AKfycbyLfAPyTaKvoSgl7W-OdXrfKRm1rofmRGs_ZD15RzMf1GrvTQAR6DiZrFD6SiZ8HSV4/exec` | URL pública do Web App no Google Apps Script |
+| **Endpoint do Apps Script Proxy** | `https://script.google.com/macros/s/AKfycbyhb7jguRrdpBdYx335yj7zLXObTm53l0BLL4k3_Q-Ci2x4xP4DeJqQRfWFzlJSn5q_/exec` | URL pública do Web App no Google Apps Script |
+| **Repositório do Código-Fonte** | `JaderBrito09/extensao_geral` | Repositório exclusivo do código da extensão e docs |
+| **Repositório Exclusivo de Skills** | `JaderBrito09/assistente-jorge-skills` | Repositório dedicado para arquivos Markdown de Habilidades |
+
+---
+
+## 🐙 Arquitetura de Repositórios no GitHub
+
+Para manter a segurança e facilitar a gestão contínua de conteúdo sem a necessidade de re-compilar ou alterar o código da extensão, o projeto utiliza **dois repositórios independentes**:
+
+### 1. **Repositório do Código-Fonte (`JaderBrito09/extensao_geral`)**
+- **Objetivo**: Armazenar o código da aplicação da extensão Chrome (Manifest V3), componentes de interface (`sidepanel.*`), manipuladores de eventos do navegador, servidor intermediário `apps-script/Code.gs`, testes unitários e documentação técnica.
+- **Acesso**: Restrito aos desenvolvedores da extensão.
+
+### 2. **Repositório Exclusivo de Skills (`JaderBrito09/assistente-jorge-skills`)**
+- **Objetivo**: Repositório público/dedicado onde especialistas de domínio (jurídico, SEO, dev, etc.) publicam e atualizam os arquivos Markdown (`.md`) com os *System Prompts* e orientações das habilidades.
+- **Endpoint da API Consumido**:  
+  `https://api.github.com/repos/JaderBrito09/assistente-jorge-skills/contents/skills`
+- **Estrutura de Pastas Interna**:
+  - `/skills/geral.md` — Skill de Consulta Livre e Análise Geral
+  - `/skills/juridico.md` — Skill de Revisão Contratual e Riscos Legais
+  - `/skills/codigo.md` — Skill de Auditoria e Otimização de Código
+  - `/skills/seo.md` — Skill de Otimização e Diagnóstico de SEO
+  - `/skills/traducao.md` — Skill de Tradução e Adaptação Cultural
 
 ---
 

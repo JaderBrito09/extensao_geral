@@ -10,8 +10,6 @@ node_modules/
 *.key
 *.credentials
 client_secret_*.json
+credentials/
 env.json
 .env
-
-# Diretório de testes temporários e cache
-.tests/

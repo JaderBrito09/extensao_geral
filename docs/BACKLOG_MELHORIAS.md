@@ -102,7 +102,7 @@ Cada tarefa é atômica. Diga **"próxima"** ou o **número da tarefa** para exe
 
 ### Tarefa 15: Criar guia de deploy do Apps Script
 - **O quê**: Instruções passo a passo para: criar o Apps Script vinculado à planilha, colar o `Code.gs`, configurar `GEMINI_API_KEY` nas Script Properties, fazer deploy como Web App, e copiar a URL do endpoint.
-- **Arquivos**: `docs/APPS_SCRIPT_DEPLOY.md` [NEW], `config.md`
+- **Arquivos**: `docs/APPS_SCRIPT_DEPLOY.md` [NEW], `docs/config.md`
 - **Status**: `[x]`
 
 ### Tarefa 16: Integrar extensão com o Proxy Apps Script
@@ -131,20 +131,20 @@ Cada tarefa é atômica. Diga **"próxima"** ou o **número da tarefa** para exe
 ## Sprint 8 — Skills Dinâmicas via GitHub
 
 ### Tarefa 19: Criar repositório de skills (estrutura e exemplos)
-- **O quê**: Gerar os arquivos Markdown de exemplo para o repositório de skills (`skills/geral.md`, `skills/juridico.md`, `skills/codigo.md`, `skills/seo.md`, `skills/traducao.md`) seguindo a estrutura padronizada do SKILLS_GUIDE.
-- **Arquivos**: `skills-repo/skills/geral.md` [NEW], `skills-repo/skills/juridico.md` [NEW], `skills-repo/skills/codigo.md` [NEW], `skills-repo/skills/seo.md` [NEW], `skills-repo/skills/traducao.md` [NEW]
-- **Status**: `[ ]`
+- **O quê**: Criar o arquivo `skills-repo/skills/geral.md` com suporte a consulta livre e autorização explícita para uso de conhecimento prévio quando a informação não for encontrada nos anexos/página.
+- **Arquivos**: `skills-repo/skills/geral.md` [NEW]
+- **Status**: `[x]`
 
 ### Tarefa 20: Implementar carregamento dinâmico de skills do GitHub
-- **O quê**: Buscar lista de arquivos `.md` via GitHub REST API (`/repos/{owner}/{repo}/contents/skills`). Parsear cada arquivo para extrair nome, categoria, descrição e system prompt. Popular o `<select>` dinamicamente. Fallback para skills hardcoded se offline ou erro.
+- **O quê**: Buscar lista de arquivos `.md` via GitHub REST API (`/repos/{owner}/{repo}/contents/skills-repo/skills`). Parsear cada arquivo para extrair nome, categoria, descrição e system prompt. Popular o `<select>` dinamicamente. Fallback para skills hardcoded se offline ou erro.
 - **Arquivos**: `sidepanel.js`
-- **Status**: `[ ]`
+- **Status**: `[x]`
 
 ### Tarefa 21: Cache de skills offline + filtro por permissão
-- **O quê**: Salvar skills carregadas em `chrome.storage.local` para uso offline. Filtrar skills exibidas com base na coluna `Skills Permitidas` do usuário (retornada pelo proxy na validação). TTL de cache de 1 hora.
+- **O quê**: Salvar skills carregadas em `chrome.storage.local` para uso offline (TTL de cache de 1 hora). Filtrar skills exibidas com base na coluna `Skills Permitidas` do usuário.
 - **Arquivos**: `sidepanel.js`
 - **Depende de**: Tarefa 16, 20
-- **Status**: `[ ]`
+- **Status**: `[x]`
 
 ---
 
@@ -196,6 +196,31 @@ Cada tarefa é atômica. Diga **"próxima"** ou o **número da tarefa** para exe
 
 ---
 
+## Sprint 12 — Publicação & Deploy em Produção (Chrome Web Store)
+
+### Tarefa 29: Preparação do Bundle de Produção (`.zip`)
+- **O quê**: Empacotar apenas os arquivos de runtime necessários (`manifest.json`, `sidepanel.*`, `lib/`, `icons/`), ignorando testes, documentação e fontes desnecessários.
+- **Arquivos**: `dist/extensao_geral.zip` [NEW]
+- **Status**: `[ ]`
+
+### Tarefa 30: Ajuste de Client ID e OAuth no Google Cloud Console
+- **O quê**: Obter a chave pública / ID oficial da extensão no Chrome Developer Dashboard, registrar a chave fixa/Client ID de produção no Google Cloud Console e atualizar `manifest.json`.
+- **Arquivos**: `manifest.json`
+- **Depende de**: Tarefa 29
+- **Status**: `[ ]`
+
+### Tarefa 31: Preparação dos Assets da Loja e Política de Privacidade
+- **O quê**: Gerar screenshots (1280x800), ícone promocional da loja (440x280), descrição detalhada das permissões e disponibilizar o link público da política de privacidade (`SECURITY_PRIVACY.md`).
+- **Arquivos**: `docs/SECURITY_PRIVACY.md`
+- **Status**: `[ ]`
+
+### Tarefa 32: Submissão e Publicação no Chrome Web Store
+- **O quê**: Upload do pacote zip na Chrome Web Store Developer Console, preenchimento das justificativas de privacidade/escopo OAuth e envio para análise e aprovação.
+- **Depende de**: Tarefa 29, 30, 31
+- **Status**: `[ ]`
+
+---
+
 ## Resumo Geral
 
 | Sprint | Tarefas | Foco | Status |
@@ -204,12 +229,15 @@ Cada tarefa é atômica. Diga **"próxima"** ou o **número da tarefa** para exe
 | 2 — UX Core | 3–7 | Markdown, loading, validação, contexto, race condition | `[x]` Concluído |
 | 3 — Visual | 8–9 | Ícones + manifest | `[x]` Concluído |
 | 4 — DOM | 10 | Extração inteligente | `[x]` Concluído |
-| 5 — OAuth | 11–13 | Login Google + perfil do usuário | `[x]` Especificado |
-| 6 — Proxy | 14–16 | Apps Script Gateway + remoção da API key do cliente | `[x]` Especificado |
-| 7 — Acesso | 17–18 | Planilha de controle + tela de bloqueio | `[x]` Especificado |
-| 8 — Skills | 19–21 | GitHub dinâmico + cache + filtro | `[x]` Especificado |
+| 5 — OAuth | 11–13 | Login Google + perfil do usuário | `[x]` Concluído |
+| 6 — Proxy | 14–16 | Apps Script Gateway + remoção da API key do cliente | `[x]` Concluído |
+| 7 — Acesso | 17–18 | Planilha de controle + tela de bloqueio | `[x]` Concluído |
+| 8 — Skills | 19–21 | GitHub dinâmico + cache + filtro de permissão | `[x]` Concluído |
 | 9 — Downloads | 22–23 | Painel de arquivos + anexos e downloads | `[x]` Concluído |
 | 10 — Docs | 24–27 | Documentação final alinhada | `[x]` Concluído |
 | 11 — QA | 28 | Verificação e walkthrough | `[x]` Concluído |
+| 12 — Deploy Store | 29–32 | Bundle, OAuth de produção, assets e submissão à Chrome Store | `[ ]` Planejado |
 
-> **Status do Projeto: 100% de Conformidade e Testes Aprovados (17/17 testes de integração e sintaxe passarem com sucesso)**
+> **Status do Projeto: 11/12 Sprints Concluídas e Sprint 12 Adicionada ao Planejamento**
+
+

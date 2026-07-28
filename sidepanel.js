@@ -1,30 +1,23 @@
-// Configuration of Specialized Skills with dedicated System Instructions
-const skillsConfig = {
-  geral: {
-    systemPrompt: "Atue como um analista de dados e informação sênior. Resuma os pontos centrais, extraia insights essenciais e responda à pergunta sobre a página com clareza objetiva e estrutura organizada.",
-    label: "Geral"
-  },
-  juridico: {
-    systemPrompt: "Atue como um advogado especialista em Direito Digital e Contratos. Analise o conteúdo da página focando em riscos ocultos, obrigações do usuário, cláusulas abusivas, privacidade e conformidade legal (LGPD/GDPR).",
-    label: "Jurídico"
-  },
-  codigo: {
-    systemPrompt: "Atue como Engenheiro de Software Sênior e Arquiteto de Sistemas. Avalie o código, documentação ou arquitetura técnica na página, identificando vulnerabilidades, débitos técnicos, más práticas e sugestões de otimização de código.",
-    label: "Dev/Código"
-  },
-  seo: {
-    systemPrompt: "Atue como Especialista em SEO e Content Marketing. Analise a hierarquia da página, clareza da proposta de valor, adequação de palavras-chave, escaneabilidade e otimização para motores de busca.",
-    label: "SEO"
-  },
-  traducao: {
-    systemPrompt: "Atue como um Tradutor e Adaptador Linguístico Cultural sênior. Traduza e adapte trechos ou o resumo da página para o Português do Brasil com fluência natural, preservando termos técnicos relevantes.",
-    label: "Tradução"
-  }
-};
+// Configuration of Specialized Skills dynamically loaded from Markdown files (.md)
+let skillsConfig = {};
 
 const MAX_PAGE_CHARS = 30000; // Limite de caracteres para prevenção de estouro de tokens
 const MAX_HISTORY_TURNS = 10; // Número máximo de mensagens do histórico enviadas ao Gemini
 const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash'; // Modelo padrão do Gemini (facilita troca futura)
+const DEFAULT_APPS_SCRIPT_ENDPOINT = "https://script.google.com/macros/s/AKfycbyhb7jguRrdpBdYx335yj7zLXObTm53l0BLL4k3_Q-Ci2x4xP4DeJqQRfWFzlJSn5q_/exec";
+
+/**
+ * Obtém a URL do Apps Script Proxy Gateway com migração automática de endpoints antigos
+ */
+async function getProxyEndpoint() {
+  if (typeof chrome === 'undefined' || !chrome.storage) return DEFAULT_APPS_SCRIPT_ENDPOINT;
+  const { apps_script_endpoint: storedEndpoint } = await chrome.storage.local.get('apps_script_endpoint');
+  if (!storedEndpoint || storedEndpoint.includes('AKfycbyLfAPyTaKvoSgl7W-OdXrfKRm1rofmRGs_ZD15RzMf1GrvTQAR6DiZrFD6SiZ8HSV4')) {
+    await chrome.storage.local.set({ apps_script_endpoint: DEFAULT_APPS_SCRIPT_ENDPOINT });
+    return DEFAULT_APPS_SCRIPT_ENDPOINT;
+  }
+  return storedEndpoint;
+}
 
 const STRICT_DOCUMENT_SCOPE_PROMPT = `
 [REGRA OBRIGATÓRIA DE RESTRIÇÃO DE ESCOPO DOCUMENTAL]:
@@ -103,8 +96,62 @@ newChatBtn.addEventListener('click', () => iniciarNovaConversa(true));
 historyDrawerBtn.addEventListener('click', toggleHistoryDrawer);
 closeHistoryDrawerBtn.addEventListener('click', () => historyDrawer.classList.add('hidden'));
 
-// Listeners para Anexo de Arquivos e Downloads
-attachBtn.addEventListener('click', () => fileInput.click());
+// Listeners para Anexo de Arquivos (Menu Estilo Gemini) e Downloads
+const attachDropdown = document.getElementById('attach-dropdown');
+const optUploadFile = document.getElementById('opt-upload-file');
+const optGoogleDrive = document.getElementById('opt-google-drive');
+const optInsertLink = document.getElementById('opt-insert-link');
+
+if (attachBtn && attachDropdown) {
+  attachBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    attachDropdown.classList.toggle('hidden');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (attachDropdown && !attachDropdown.contains(e.target) && e.target !== attachBtn) {
+      attachDropdown.classList.add('hidden');
+    }
+  });
+}
+
+if (optUploadFile) {
+  optUploadFile.addEventListener('click', () => {
+    if (attachDropdown) attachDropdown.classList.add('hidden');
+    fileInput.click();
+  });
+}
+
+if (optGoogleDrive) {
+  optGoogleDrive.addEventListener('click', () => {
+    if (attachDropdown) attachDropdown.classList.add('hidden');
+    const driveUrl = prompt("Insira a URL do arquivo ou pasta do Google Drive:");
+    if (driveUrl && driveUrl.trim()) {
+      attachedFiles.push({
+        name: "Google Drive Document",
+        type: "google-drive",
+        content: `[LINK RECURSO GOOGLE DRIVE]: ${driveUrl.trim()}`
+      });
+      renderAttachedFilesUI();
+    }
+  });
+}
+
+if (optInsertLink) {
+  optInsertLink.addEventListener('click', () => {
+    if (attachDropdown) attachDropdown.classList.add('hidden');
+    const linkUrl = prompt("Insira a URL do documento ou página externa:");
+    if (linkUrl && linkUrl.trim()) {
+      attachedFiles.push({
+        name: "Link Externo",
+        type: "url-link",
+        content: `[LINK EXTERNO FORNECIDO]: ${linkUrl.trim()}`
+      });
+      renderAttachedFilesUI();
+    }
+  });
+}
+
 fileInput.addEventListener('change', handleFileSelection);
 downloadAllBtn.addEventListener('click', baixarTodosArquivos);
 
@@ -116,8 +163,233 @@ if (typeof chrome !== 'undefined' && chrome.tabs) {
   });
 }
 
+// Listener para exibição de orientação ao alterar a Habilidade selecionada
+if (selectEl) {
+  selectEl.addEventListener('change', async () => {
+    const selectedKey = selectEl.value;
+    if (!selectedKey) {
+      appendMessageUI('⚠️ **Nenhuma Habilidade selecionada.**\nPor favor, selecione uma Habilidade no menu superior para orientar a análise do assistente.', 'ai-msg', false);
+      return;
+    }
+
+    const skill = await buscarSkillNoGithub(selectedKey);
+    if (skill && skill.userGuidance) {
+      appendMessageUI(`💡 **Habilidade Selecionada: ${skill.label}**\n\n${skill.userGuidance}`, 'ai-msg', false);
+    } else if (skill) {
+      appendMessageUI(`💡 **Habilidade Selecionada: ${skill.label}**\n\nHabilidade pronta para uso. Envie sua pergunta ou anexos.`, 'ai-msg', false);
+    }
+  });
+}
+
+/**
+ * Busca uma skill específica no GitHub com suporte a fallback e cache local
+ */
+async function buscarSkillNoGithub(skillKey) {
+  if (!skillKey) return null;
+
+  if (skillsConfig[skillKey] && skillsConfig[skillKey].systemPrompt && skillsConfig[skillKey].userGuidance) {
+    return skillsConfig[skillKey];
+  }
+
+  try {
+    let url = `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/skills/${skillKey}.md`;
+    let resp = await fetch(url);
+    if (!resp.ok) {
+      url = `https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/skills-repo/skills/${skillKey}.md`;
+      resp = await fetch(url);
+    }
+
+    if (resp.ok) {
+      const mdText = await resp.text();
+      const parsedSkill = parseSkillMarkdown(mdText, skillKey);
+      skillsConfig[skillKey] = parsedSkill;
+
+      const { cached_skills = {} } = await chrome.storage.local.get('cached_skills');
+      cached_skills[skillKey] = parsedSkill;
+      await chrome.storage.local.set({ cached_skills, skills_cache_timestamp: Date.now() });
+
+      return parsedSkill;
+    }
+  } catch (err) {
+    console.warn(`Falha ao buscar a skill ${skillKey} no GitHub, utilizando versão local:`, err);
+  }
+
+  return skillsConfig[skillKey] || null;
+}
+
+const SKILLS_CACHE_TTL_MS = 3600 * 1000; // Cache TTL de 1 hora (Sprint 21)
+
+/**
+ * Função para parsear o conteúdo Markdown (.md) das Habilidades
+ */
+function parseSkillMarkdown(mdText, skillId) {
+  let label = skillId;
+  let category = "Geral";
+  let description = "";
+  let userGuidance = "";
+  let systemPrompt = "";
+
+  const titleMatch = mdText.match(/^#\s*Skill:\s*(.+)$/m);
+  if (titleMatch) label = titleMatch[1].trim();
+
+  const catMatch = mdText.match(/^\*\*Categoria\*\*:\s*(.+)$/m);
+  if (catMatch) category = catMatch[1].trim();
+
+  const descMatch = mdText.match(/^\*\*Descrição\*\*:\s*(.+)$/m);
+  if (descMatch) description = descMatch[1].trim();
+
+  const guidanceSection = mdText.split(/##\s*Orientação Inicial ao Usuário/i)[1];
+  if (guidanceSection) {
+    const guidanceContent = guidanceSection.split(/##\s*System Prompt/i)[0];
+    userGuidance = guidanceContent.trim();
+  }
+
+  const systemSection = mdText.split(/##\s*System Prompt/i)[1];
+  if (systemSection) {
+    systemPrompt = systemSection.trim();
+  } else {
+    systemPrompt = mdText;
+  }
+
+  return {
+    label: label,
+    category: category,
+    description: description,
+    userGuidance: userGuidance,
+    systemPrompt: systemPrompt
+  };
+}
+
+/**
+ * Carrega habilidades dinamicamente do manifesto skills.json no GitHub ou do Cache (Sprint 8)
+ */
+async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
+  if (typeof chrome === 'undefined' || !chrome.storage) return;
+
+  try {
+    const { cached_skills, skills_cache_timestamp } = await chrome.storage.local.get(['cached_skills', 'skills_cache_timestamp']);
+    const now = Date.now();
+
+    if (cached_skills && skills_cache_timestamp && (now - skills_cache_timestamp < SKILLS_CACHE_TTL_MS)) {
+      skillsConfig = { ...skillsConfig, ...cached_skills };
+    } else {
+      // 1. Tentar ler o catálogo skills.json no repositório exclusivo de skills
+      let catalogUrl = "https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/skills.json";
+      let catResp = await fetch(catalogUrl);
+
+      if (!catResp.ok) {
+        // Fallback local do manifesto skills.json
+        catalogUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
+          ? chrome.runtime.getURL('skills-repo/skills.json') 
+          : './skills-repo/skills.json';
+        catResp = await fetch(catalogUrl);
+      }
+
+      if (catResp.ok) {
+        const catalogData = await catResp.json();
+        const downloadedSkills = {};
+
+        if (catalogData && catalogData.skills && Array.isArray(catalogData.skills)) {
+          for (const item of catalogData.skills) {
+            const skillId = item.id || item.slug || item.file.replace(/^.*[\\\/]/, '').replace('.md', '');
+            const rawMdUrl = `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/${item.file}`;
+            let mdResp = await fetch(rawMdUrl);
+
+            if (!mdResp.ok) {
+              const localMdUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
+                ? chrome.runtime.getURL(item.file) 
+                : './' + item.file;
+              mdResp = await fetch(localMdUrl);
+            }
+
+            if (mdResp.ok) {
+              const mdText = await mdResp.text();
+              const parsed = parseSkillMarkdown(mdText, skillId);
+              parsed.id = skillId;
+              parsed.slug = item.slug || skillId;
+              parsed.category = item.category || parsed.category || "Geral";
+              downloadedSkills[skillId] = parsed;
+            }
+          }
+        }
+
+        if (Object.keys(downloadedSkills).length > 0) {
+          skillsConfig = { ...skillsConfig, ...downloadedSkills };
+          await chrome.storage.local.set({
+            cached_skills: downloadedSkills,
+            skills_cache_timestamp: now
+          });
+        }
+      }
+
+      // Se nenhuma skill foi baixada, carrega a skill Markdown local (skills-repo/skills/geral.md)
+      if (Object.keys(skillsConfig).length === 0) {
+        try {
+          const localUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
+            ? chrome.runtime.getURL('skills-repo/skills/geral.md') 
+            : './skills-repo/skills/geral.md';
+          const localResp = await fetch(localUrl);
+          if (localResp.ok) {
+            const mdText = await localResp.text();
+            const parsed = parseSkillMarkdown(mdText, 'SKILL-GERAL-001');
+            parsed.id = 'SKILL-GERAL-001';
+            parsed.slug = 'geral';
+            parsed.category = 'Geral';
+            skillsConfig['SKILL-GERAL-001'] = parsed;
+            skillsConfig['geral'] = parsed;
+          }
+        } catch (e) {
+          console.warn("Aviso na leitura local de skills-repo/skills/geral.md:", e);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Aviso: Carregamento dinâmico de skills usou o conjunto local de fallback.", err);
+  }
+
+  popularSelectSkills(allowedSkills);
+}
+
+/**
+ * Popula o <select> com suporte híbrido: Match por ID imutável, por Categoria (CAT:Nome) ou ALL.
+ */
+function popularSelectSkills(allowedSkills = ["ALL"]) {
+  if (!selectEl) return;
+  const currentVal = selectEl.value;
+  selectEl.innerHTML = '<option value="" disabled selected>💡 Selecione uma Habilidade...</option>';
+
+  const isAllAllowed = allowedSkills.includes("ALL") || allowedSkills.includes("*");
+  const normalizedAllowed = allowedSkills.map(s => s.trim().toUpperCase());
+
+  for (const [key, skill] of Object.entries(skillsConfig)) {
+    const skillIdUpper = (skill.id || key).toUpperCase();
+    const skillSlugUpper = (skill.slug || key).toUpperCase();
+    const skillCatUpper = `CAT:${(skill.category || "GERAL").toUpperCase()}`;
+
+    const hasPermission = isAllAllowed ||
+      normalizedAllowed.includes(skillIdUpper) ||
+      normalizedAllowed.includes(skillSlugUpper) ||
+      normalizedAllowed.includes(skillCatUpper);
+
+    if (hasPermission) {
+      // Evita duplicatas caso a chave esteja mapeada por ID e Slug
+      if (!selectEl.querySelector(`option[value="${key}"]`)) {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = skill.label;
+        selectEl.appendChild(option);
+      }
+    }
+  }
+
+  if (currentVal && skillsConfig[currentVal]) {
+    selectEl.value = currentVal;
+  }
+}
+
 // Init SidePanel & Session
 async function initSidePanel() {
+  await carregarSkillsDinamicas();
   await verificarStatusAuth();
 
   const data = await chrome.storage.local.get(['chat_sessions', 'active_chat_id']);
@@ -169,8 +441,7 @@ async function verificarStatusAuth() {
  */
 async function validarUsuarioNaPlanilha(email) {
   try {
-    const { apps_script_endpoint: storedEndpoint } = await chrome.storage.local.get('apps_script_endpoint');
-    const proxyEndpoint = storedEndpoint || "https://script.google.com/macros/s/AKfycbyLfAPyTaKvoSgl7W-OdXrfKRm1rofmRGs_ZD15RzMf1GrvTQAR6DiZrFD6SiZ8HSV4/exec";
+    const proxyEndpoint = await getProxyEndpoint();
 
     const response = await fetch(proxyEndpoint, {
       method: 'POST',
@@ -373,9 +644,9 @@ async function realizarLogoutGoogle() {
 }
 
 function exibirPerfilLogado(profile) {
-  userAvatar.src = profile.picture;
-  userName.textContent = profile.name;
-  userEmail.textContent = profile.email;
+  if (userAvatar) userAvatar.src = profile.picture;
+  if (userName) userName.textContent = profile.name;
+  if (userEmail) userEmail.textContent = profile.email;
   mainAppScreen.classList.remove('hidden');
   loginScreen.classList.add('hidden');
   if (accessDeniedScreen) accessDeniedScreen.classList.add('hidden');
@@ -743,6 +1014,11 @@ async function processarRequisicao() {
 
   if (!userInput && attachedFiles.length === 0) return;
 
+  if (!selectedSkillKey) {
+    appendMessageUI('⚠️ **Por favor, selecione uma Habilidade no topo antes de enviar a pergunta.**', 'ai-msg', false);
+    return;
+  }
+
   // 1. Obter API Key (do storage ou fallback)
   const { gemini_api_key: storedKey } = await chrome.storage.local.get('gemini_api_key');
   const apiKey = storedKey || "";
@@ -796,11 +1072,13 @@ async function processarRequisicao() {
     }
 
     // 7. Montagem do Prompt Consolidado e Chamada via Google Apps Script Proxy Gateway
-    const currentSkill = skillsConfig[selectedSkillKey];
+    const currentSkill = await buscarSkillNoGithub(selectedSkillKey);
+    if (!currentSkill || !currentSkill.systemPrompt) {
+      throw new Error("Não foi possível carregar as diretrizes da Habilidade selecionada.");
+    }
     
     // Obter URL do endpoint do Apps Script das configurações (ou fallback padrão oficial)
-    const { apps_script_endpoint: storedEndpoint } = await chrome.storage.local.get('apps_script_endpoint');
-    const proxyEndpoint = storedEndpoint || "https://script.google.com/macros/s/AKfycbyLfAPyTaKvoSgl7W-OdXrfKRm1rofmRGs_ZD15RzMf1GrvTQAR6DiZrFD6SiZ8HSV4/exec";
+    const proxyEndpoint = await getProxyEndpoint();
 
     // Recorrer ao histórico da sessão ativa
     const { chat_sessions = [] } = await chrome.storage.local.get('chat_sessions');
@@ -835,9 +1113,15 @@ async function processarRequisicao() {
     });
 
     if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      const errDetail = errData.message || errData.error || response.statusText;
-      throw new Error(`Erro no Proxy Apps Script (${response.status}): ${errDetail}`);
+      let errDetail = response.statusText;
+      try {
+        const errData = await response.json();
+        errDetail = errData.message || errData.error || errDetail;
+      } catch (e) {
+        const rawText = await response.text().catch(() => "");
+        if (rawText) errDetail = rawText.slice(0, 150);
+      }
+      throw new Error(`Erro no Proxy Apps Script (${response.status}): ${errDetail || "Não foi possível conectar ao servidor."}`);
     }
 
     const data = await response.json();
