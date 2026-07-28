@@ -296,9 +296,10 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
             let mdResp = await fetch(rawMdUrl);
 
             if (!mdResp.ok) {
+              const localPath = 'skills-repo/' + item.file;
               const localMdUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
-                ? chrome.runtime.getURL(item.file) 
-                : './' + item.file;
+                ? chrome.runtime.getURL(localPath) 
+                : './' + localPath;
               mdResp = await fetch(localMdUrl);
             }
 
@@ -322,12 +323,12 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
         }
       }
 
-      // Se nenhuma skill foi baixada, carrega a skill Markdown local (skills-repo/skills/geral.md)
+      // Se nenhuma skill foi baixada, carrega a skill Markdown local (skills-repo/skills/geral/SKILL.md)
       if (Object.keys(skillsConfig).length === 0) {
         try {
           const localUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
-            ? chrome.runtime.getURL('skills-repo/skills/geral.md') 
-            : './skills-repo/skills/geral.md';
+            ? chrome.runtime.getURL('skills-repo/skills/geral/SKILL.md') 
+            : './skills-repo/skills/geral/SKILL.md';
           const localResp = await fetch(localUrl);
           if (localResp.ok) {
             const mdText = await localResp.text();
@@ -339,7 +340,7 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
             skillsConfig['geral'] = parsed;
           }
         } catch (e) {
-          console.warn("Aviso na leitura local de skills-repo/skills/geral.md:", e);
+          console.warn("Aviso na leitura local de skills-repo/skills/geral/SKILL.md:", e);
         }
       }
     }
