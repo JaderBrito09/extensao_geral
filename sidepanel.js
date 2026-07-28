@@ -822,13 +822,14 @@ async function limparConversaAtual() {
 
 // --- Gestão do Painel 'Arquivos da Página' e Downloads ---
 
-// Função injetada no DOM para extrair links de download na aba ativa
+// Função injetada no DOM para extrair links e anexos de download na aba ativa (incluindo Gmail e webmails)
 function extractPageFilesFromDOM() {
-  const supportedExts = ['.pdf', '.txt', '.csv', '.json', '.docx', '.xlsx', '.doc', '.xls', '.zip', '.rar', '.7z', '.xml', '.md', '.ods', '.odt'];
-  const elements = Array.from(document.querySelectorAll('a[href], [download], [data-href], embed[src], object[data], iframe[src]'));
+  const supportedExts = ['.pdf', '.txt', '.csv', '.json', '.docx', '.xlsx', '.doc', '.xls', '.zip', '.rar', '.7z', '.xml', '.md', '.ods', '.odt', '.png', '.jpg', '.jpeg'];
   const fileMap = new Map();
 
-  elements.forEach(el => {
+  // 1. Detecção de links e elementos padrão com Href/Src/Data
+  const standardElements = Array.from(document.querySelectorAll('a[href], [download], [data-href], embed[src], object[data], iframe[src]'));
+  standardElements.forEach(el => {
     const rawUrl = el.href || el.getAttribute('download') || el.getAttribute('data-href') || el.src || el.data;
     if (!rawUrl || typeof rawUrl !== 'string' || rawUrl.startsWith('javascript:') || rawUrl.startsWith('#')) return;
 
@@ -852,17 +853,63 @@ function extractPageFilesFromDOM() {
           filename = 'documento_download';
         }
 
-        // Se o nome não tiver extensão visível, tenta inferir a extensão a partir da URL
         const extFound = supportedExts.find(ext => pathname.endsWith(ext) || searchParams.includes(ext));
         if (extFound && !filename.toLowerCase().endsWith(extFound)) {
           filename += extFound;
         }
 
         if (!fileMap.has(fullUrl)) {
-          fileMap.set(fullUrl, { name: filename, url: fullUrl });
+          fileMap.set(fullUrl, { name: filename, url: fullUrl, isDomClick: false });
         }
       }
     } catch (e) {}
+  });
+
+  // 2. Detecção Especializada para Gmail & Webmails (Anexos protegidos sem URL estática)
+  // O Gmail utiliza elementos com atributos como download-url, data-tooltip="Fazer o download", seletores .a6S, [aria-label*="Download"], etc.
+  const gmailAttachments = Array.from(document.querySelectorAll('[download-url], .a6S, [aria-label*="Download"], [aria-label*="download"], [aria-label*="Baixar"], [data-tooltip*="Baixar"], [data-tooltip*="Download"]'));
+  
+  gmailAttachments.forEach((el, index) => {
+    let filename = '';
+    let rawUrl = '';
+
+    const downloadUrlAttr = el.getAttribute('download-url');
+    if (downloadUrlAttr) {
+      // O formato do atributo no Gmail é: mime:filename:url
+      const parts = downloadUrlAttr.split(':');
+      if (parts.length >= 3) {
+        filename = decodeURIComponent(parts[1]);
+        rawUrl = parts.slice(2).join(':');
+      }
+    }
+
+    if (!filename) {
+      filename = el.getAttribute('aria-label') || el.getAttribute('data-tooltip') || el.textContent || '';
+      filename = filename.replace(/^Baixar\s+/i, '').replace(/^Download\s+/i, '').trim();
+    }
+
+    // Se o elemento pai contiver um nome de arquivo visível (ex: cartão de anexo do Gmail)
+    const cardParent = el.closest('.azo, .a6S, .br5, [role="listitem"]');
+    if (cardParent) {
+      const nameEl = cardParent.querySelector('.aV3, .aqN, .aqP, span');
+      if (nameEl && nameEl.textContent) {
+        filename = nameEl.textContent.trim();
+      }
+    }
+
+    if (filename && filename.length > 2) {
+      const key = rawUrl || `gmail-attach-${index}-${filename}`;
+      if (!fileMap.has(key)) {
+        // Marca que este elemento exige um evento de clique real no DOM
+        fileMap.set(key, { 
+          name: filename, 
+          url: rawUrl || '#', 
+          isDomClick: true,
+          selector: downloadUrlAttr ? `[download-url="${CSS.escape(downloadUrlAttr)}"]` : null,
+          index: index
+        });
+      }
+    }
   });
 
   return Array.from(fileMap.values());
@@ -906,13 +953,13 @@ function renderPageFilesUI() {
     const nameSpan = document.createElement('span');
     nameSpan.className = 'page-file-name';
     nameSpan.textContent = file.name;
-    nameSpan.title = file.url;
+    nameSpan.title = file.url !== '#' ? file.url : file.name;
 
     const dlBtn = document.createElement('button');
     dlBtn.className = 'download-file-btn';
     dlBtn.innerHTML = '⬇️';
     dlBtn.title = `Baixar ${file.name}`;
-    dlBtn.addEventListener('click', () => baixarArquivoUnitario(file.url, file.name));
+    dlBtn.addEventListener('click', () => baixarArquivoUnitario(file));
 
     li.appendChild(nameSpan);
     li.appendChild(dlBtn);
@@ -920,14 +967,47 @@ function renderPageFilesUI() {
   });
 }
 
-function baixarArquivoUnitario(url, filename) {
-  if (typeof chrome !== 'undefined' && chrome.downloads) {
-    chrome.downloads.download({ url, filename: filename || undefined });
+function triggerDomDownloadInPage(fileInfo) {
+  try {
+    let targetEl = null;
+    if (fileInfo.selector) {
+      targetEl = document.querySelector(fileInfo.selector);
+    }
+    if (!targetEl) {
+      const candidates = Array.from(document.querySelectorAll('[download-url], .a6S, [aria-label*="Download"], [aria-label*="download"], [aria-label*="Baixar"], [data-tooltip*="Baixar"], [data-tooltip*="Download"]'));
+      targetEl = candidates[fileInfo.index] || candidates.find(c => (c.getAttribute('aria-label') || c.getAttribute('data-tooltip') || '').includes(fileInfo.name));
+    }
+    if (targetEl) {
+      targetEl.click();
+    }
+  } catch (e) {}
+}
+
+async function baixarArquivoUnitario(file) {
+  if (file.isDomClick) {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab && tab.id) {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: triggerDomDownloadInPage,
+          args: [file]
+        });
+      }
+    } catch (e) {
+      console.warn("Erro ao simular clique no DOM para download:", e);
+    }
   } else {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename || '';
-    a.click();
+    const url = file.url;
+    const filename = file.name;
+    if (typeof chrome !== 'undefined' && chrome.downloads) {
+      chrome.downloads.download({ url, filename: filename || undefined });
+    } else {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || '';
+      a.click();
+    }
   }
 }
 
