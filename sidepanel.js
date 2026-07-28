@@ -173,6 +173,9 @@ if (typeof chrome !== 'undefined' && chrome.tabs) {
 // Listener para exibição de orientação ao alterar a Habilidade selecionada
 if (selectEl) {
   selectEl.addEventListener('change', async () => {
+    // Atualiza o estado habilitado/desabilitado dos botões de download da página
+    renderPageFilesUI();
+
     const selectedKey = selectEl.value;
     if (!selectedKey) {
       appendMessageUI('⚠️ **Nenhuma Habilidade selecionada.**\nPor favor, selecione uma Habilidade no menu superior para orientar a análise do assistente.', 'ai-msg', false);
@@ -950,8 +953,14 @@ function renderPageFilesUI() {
     return;
   }
 
+  const hasSkillSelected = Boolean(selectEl && selectEl.value);
   pageFilesCount.textContent = detectedPageFiles.length;
   pageFilesPanel.classList.remove('hidden');
+
+  if (downloadAllBtn) {
+    downloadAllBtn.disabled = !hasSkillSelected;
+    downloadAllBtn.title = hasSkillSelected ? "Baixar todos os arquivos da página" : "Selecione uma Habilidade no menu superior para habilitar os downloads";
+  }
 
   detectedPageFiles.forEach((file) => {
     const li = document.createElement('li');
@@ -965,8 +974,15 @@ function renderPageFilesUI() {
     const dlBtn = document.createElement('button');
     dlBtn.className = 'download-file-btn';
     dlBtn.innerHTML = '⬇️';
-    dlBtn.title = `Baixar ${file.name}`;
-    dlBtn.addEventListener('click', () => baixarArquivoUnitario(file));
+    dlBtn.disabled = !hasSkillSelected;
+    dlBtn.title = hasSkillSelected ? `Baixar ${file.name}` : "Selecione uma Habilidade no menu superior para habilitar o download";
+    dlBtn.addEventListener('click', () => {
+      if (!selectEl || !selectEl.value) {
+        appendMessageUI('⚠️ **Nenhuma Habilidade selecionada.**\nPor favor, selecione uma Habilidade no menu superior para habilitar o download de arquivos.', 'ai-msg', false);
+        return;
+      }
+      baixarArquivoUnitario(file);
+    });
 
     li.appendChild(nameSpan);
     li.appendChild(dlBtn);
@@ -1098,9 +1114,13 @@ async function baixarArquivoUnitario(file) {
 }
 
 function baixarTodosArquivos() {
+  if (!selectEl || !selectEl.value) {
+    appendMessageUI('⚠️ **Nenhuma Habilidade selecionada.**\nPor favor, selecione uma Habilidade no menu superior para habilitar o download de arquivos.', 'ai-msg', false);
+    return;
+  }
   if (!detectedPageFiles || detectedPageFiles.length === 0) return;
   detectedPageFiles.forEach(file => {
-    baixarArquivoUnitario(file.url, file.name);
+    baixarArquivoUnitario(file);
   });
 }
 
