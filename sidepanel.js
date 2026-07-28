@@ -95,7 +95,7 @@ clearHistoryBtn.addEventListener('click', limparConversaAtual);
 // Listeners de Autenticação OAuth 2.0 e Tela de Bloqueio
 googleLoginBtn.addEventListener('click', () => realizarLoginGoogle(true));
 googleLogoutBtn.addEventListener('click', realizarLogoutGoogle);
-if (retryAuthBtn) retryAuthBtn.addEventListener('click', () => realizarLoginGoogle(true));
+if (retryAuthBtn) retryAuthBtn.addEventListener('click', revalidarPermissaoUsuario);
 if (deniedLogoutBtn) deniedLogoutBtn.addEventListener('click', realizarLogoutGoogle);
 
 // Listeners de Ações de Topo e Gaveta de Histórico
@@ -234,6 +234,55 @@ async function realizarLoginSilencioso() {
       }
     });
   });
+}
+
+/**
+ * Força uma nova verificação na planilha Google Sheets sem reabrir a janela de login do Google
+ */
+async function revalidarPermissaoUsuario() {
+  if (typeof chrome === 'undefined' || !chrome.identity) return;
+
+  try {
+    if (retryAuthBtn) {
+      retryAuthBtn.disabled = true;
+      retryAuthBtn.textContent = "⏳ Verificando...";
+    }
+
+    // 1. Resgatar token silencioso
+    const token = await new Promise((resolve) => {
+      chrome.identity.getAuthToken({ interactive: false }, (t) => resolve(t));
+    });
+
+    if (!token) {
+      // Se não houver token silencioso, chama o fluxo interativo normal
+      await realizarLoginGoogle(true);
+      return;
+    }
+
+    // 2. Resgatar perfil do usuário com o token ativo
+    const profile = await buscarPerfilUsuario(token);
+
+    // 3. Consultar a Planilha Google Sheets para checar se o status mudou para ATIVO
+    const validation = await validarUsuarioNaPlanilha(profile.email);
+
+    if (validation.authorized) {
+      profile.token = token;
+      currentUser = profile;
+      await chrome.storage.session.set({ user_profile: profile });
+      exibirPerfilLogado(profile);
+    } else {
+      const errorMsg = validation.message || "Usuário não autorizado a acessar o assistente. Favor contatar o administrador.";
+      exibirTelaAcessoNegado(profile.email, errorMsg);
+    }
+  } catch (err) {
+    console.error("Erro ao revalidar permissão:", err);
+    await realizarLoginGoogle(true);
+  } finally {
+    if (retryAuthBtn) {
+      retryAuthBtn.disabled = false;
+      retryAuthBtn.textContent = "🔄 Tentar Novamente";
+    }
+  }
 }
 
 /**
