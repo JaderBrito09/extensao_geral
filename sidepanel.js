@@ -1163,24 +1163,22 @@ function readFileContent(file) {
           const bytes = new Uint8Array(buffer);
           let rawText = '';
           
-          // Converte bytes para string de caracteres preservando texto
           const chunkSize = 8192;
           for (let i = 0; i < bytes.length; i += chunkSize) {
             const chunk = bytes.subarray(i, i + chunkSize);
             rawText += String.fromCharCode.apply(null, chunk);
           }
 
-          // Extração de blocos de texto /BT ... /ET e strings (Tj / TJ) típicos do formato PDF
+          // 1. Extração de blocos de texto PDF /BT ... /ET e strings (Tj / TJ / td / TD)
           const textBlocks = [];
-          const btRegex = /\/BT[\s\S]*?\/ET/g;
+          const btRegex = /\/BT[\s\S]*?\/ET/gi;
           let match;
           while ((match = btRegex.exec(rawText)) !== null) {
             const block = match[0];
-            // Capturar conteúdo dentro de parênteses (ex: (Texto aqui) Tj ou [(Texto) 10 (Aqui)] TJ)
-            const stringMatches = block.match(/\(([^()\\]|\\[\s\S])*\)/g);
+            const stringMatches = block.match(/\(([^()\\]|\\[\s\S])*\)|\[([\s\S]*?)\]/g);
             if (stringMatches) {
               const cleaned = stringMatches
-                .map(s => s.slice(1, -1).replace(/\\([()])/g, '$1'))
+                .map(s => s.replace(/[\(\)\[\]]/g, '').replace(/\\([()])/g, '$1'))
                 .join(' ');
               if (cleaned.trim().length > 0) {
                 textBlocks.push(cleaned.trim());
@@ -1188,22 +1186,39 @@ function readFileContent(file) {
             }
           }
 
-          let extractedText = textBlocks.join('\n');
+          let extractedText = textBlocks.join(' ');
 
-          // Fallback: Se não encontrou blocos /BT ... /ET formais, filtra caracteres imprimíveis e ASCII da stream
+          // 2. Extração via regex de sequências de texto em streams descompactadas
           if (!extractedText || extractedText.trim().length < 20) {
-            const printableMatches = rawText.match(/[\x20-\x7E\xA0-\xFF\n\r\t]{4,}/g);
+            const streamMatches = rawText.match(/\/Text[\s\S]*?endstream|stream[\s\S]*?endstream/gi);
+            if (streamMatches) {
+              streamMatches.forEach(st => {
+                const subStr = st.match(/\(([^()\\]|\\[\s\S])*\)/g);
+                if (subStr) {
+                  textBlocks.push(subStr.map(s => s.slice(1, -1)).join(' '));
+                }
+              });
+              extractedText = textBlocks.join(' ');
+            }
+          }
+
+          // 3. Fallback estendido: extração de qualquer sequência de caracteres de texto imprimíveis (UTF-8/Latin1)
+          if (!extractedText || extractedText.trim().length < 20) {
+            const printableMatches = rawText.match(/[\x20-\x7E\xA0-\xFF\n\r\t]{3,}/g);
             if (printableMatches) {
               extractedText = printableMatches
-                .filter(str => !str.includes('<<') && !str.includes('>>') && !str.includes('endobj') && !str.includes('stream'))
+                .filter(str => !str.startsWith('/') && !str.includes('<<') && !str.includes('>>') && !str.includes('endobj') && !str.includes('stream') && !str.includes('xref') && !str.includes('trailer'))
                 .join(' ');
             }
           }
 
           if (extractedText && extractedText.trim().length > 10) {
-            resolve(`[CONTEÚDO EXTRAÍDO DO PDF: ${file.name}]\n` + extractedText.trim());
+            // Limpa múltiplos espaços excessivos
+            const cleanFinalText = extractedText.replace(/\s+/g, ' ').trim();
+            resolve(`[DOCUMENTO PDF: ${file.name}]\n${cleanFinalText}`);
           } else {
-            resolve(`[ARQUIVO PDF ANEXADO: ${file.name}]\nEste PDF aparenta conter imagens digitalizadas (scaneadas) ou fontes codificadas de forma binária que não possuem camada de texto nativa extraível.`);
+            // Se for PDF puramente escaneado ou binário codificado, gera aviso legível
+            resolve(`[DOCUMENTO PDF: ${file.name}]\n(Nota: Este arquivo PDF contém imagens digitalizadas sem camada de texto nativa extraível. O conteúdo extraído das streams foi: ${rawText.slice(0, 500).replace(/[^\x20-\x7E]/g, ' ')})`);
           }
         } catch (err) {
           reject(err);
