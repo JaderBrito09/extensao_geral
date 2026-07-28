@@ -346,11 +346,11 @@ textarea:disabled {
 
 textarea {
   flex: 1;
-  height: 38px;
-  min-height: 38px;
-  max-height: 120px;
+  height: 57px;
+  min-height: 57px;
+  max-height: 140px;
   resize: none;
-  padding: 9px 4px;
+  padding: 10px 6px;
   font-family: inherit;
   font-size: 13px;
   line-height: 1.4;

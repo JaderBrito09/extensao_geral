@@ -79,15 +79,15 @@ document.addEventListener('DOMContentLoaded', initSidePanel);
 sendBtn.addEventListener('click', processarRequisicao);
 // Ajuste automático de altura da textarea ao digitar (Estilo Gemini)
 userInputEl.addEventListener('input', () => {
-  userInputEl.style.height = '38px';
-  userInputEl.style.height = Math.min(userInputEl.scrollHeight, 120) + 'px';
+  userInputEl.style.height = '57px';
+  userInputEl.style.height = Math.max(57, Math.min(userInputEl.scrollHeight, 140)) + 'px';
 });
 
 userInputEl.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     processarRequisicao();
-    userInputEl.style.height = '38px';
+    userInputEl.style.height = '57px';
   }
 });
 clearHistoryBtn.addEventListener('click', limparConversaAtual);
@@ -1037,6 +1037,17 @@ async function baixarArquivoUnitario(file) {
   const filename = typeof file === 'object' ? file.name : 'arquivo_download';
   const isDomClick = typeof file === 'object' ? file.isDomClick : false;
 
+  // Emitir orientação amigável no chat para instruir o usuário
+  appendMessageUI(
+    `📥 **Download de Arquivo Solicitado: ${filename}**\n\n` +
+    `Acionamos a tentativa de download na página ativa.\n\n` +
+    `💡 **Se a caixa de salvamento não abrir automaticamente:**\n` +
+    `1. Clique no botão de download do anexo diretamente no e-mail/página.\n` +
+    `2. Em seguida, clique no botão **📎 Anexo (+)** abaixo no chat para enviar o arquivo baixado e incluí-lo na análise da IA!`,
+    'ai-msg',
+    false
+  );
+
   // 1. Se houver URL válida diferente de '#', tenta usar a API de downloads com 'saveAs'
   if (url && url !== '#' && !url.startsWith('javascript:')) {
     if (typeof chrome !== 'undefined' && chrome.downloads) {
@@ -1046,7 +1057,6 @@ async function baixarArquivoUnitario(file) {
         saveAs: true 
       }, async (downloadId) => {
         if (chrome.runtime.lastError) {
-          // Se falhar por autenticação/CORS, executa o clique via DOM na página
           if (isDomClick) {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             if (tab && tab.id && tab.url && !tab.url.startsWith('chrome://') && !tab.url.startsWith('chrome-extension://')) {
@@ -1080,28 +1090,9 @@ async function baixarArquivoUnitario(file) {
           func: triggerDomDownloadInPage,
           args: [file]
         });
-      } else {
-        appendMessageUI(
-          `🔒 **Aba do Chrome Protegida (` + (tab?.url || 'chrome://') + `)**\n\n` +
-          `O Chrome não permite a execução automática de scripts de download em abas de sistema ou de configurações (` + (tab?.url || 'chrome://') + `).\n\n` +
-          `💡 **Como proceder:**\n` +
-          `1. Acesse a aba da página onde o documento/e-mail está aberto (ex: Gmail).\n` +
-          `2. Baixe o arquivo **${filename}** diretamente pela página.\n` +
-          `3. Clique no botão de **📎 Anexo** abaixo ou arraste o arquivo para este chat para incluí-lo na análise!`,
-          'ai-msg',
-          false
-        );
       }
     } catch (e) {
-      appendMessageUI(
-        `⚠️ **Download Automático Indisponível para ${filename}**\n\n` +
-        `Não foi possível acionar o download automático na página ativa.\n\n` +
-        `💡 **Como proceder:**\n` +
-        `1. Faça o download manual do arquivo **${filename}** diretamente na página.\n` +
-        `2. Clique no botão de **📎 Anexo** no chat para enviar o documento ao assistente.`,
-        'ai-msg',
-        false
-      );
+      console.warn("Erro ao simular clique no DOM para download:", e);
     }
   }
 }
