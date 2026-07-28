@@ -61,9 +61,13 @@ const attachBtn = document.getElementById('attach-btn');
 const fileInput = document.getElementById('file-input');
 const attachedFilesContainer = document.getElementById('attached-files-container');
 
-// Elements - Autenticação Google OAuth
+// Elements - Autenticação Google OAuth & Tela de Bloqueio
 const loginScreen = document.getElementById('login-screen');
 const mainAppScreen = document.getElementById('main-app-screen');
+const accessDeniedScreen = document.getElementById('access-denied-screen');
+const deniedUserEmail = document.getElementById('denied-user-email');
+const retryAuthBtn = document.getElementById('retry-auth-btn');
+const deniedLogoutBtn = document.getElementById('denied-logout-btn');
 const googleLoginBtn = document.getElementById('google-login-btn');
 const googleLogoutBtn = document.getElementById('google-logout-btn');
 const loginErrorMsg = document.getElementById('login-error-msg');
@@ -88,9 +92,11 @@ userInputEl.addEventListener('keydown', (e) => {
 });
 clearHistoryBtn.addEventListener('click', limparConversaAtual);
 
-// Listeners de Autenticação OAuth 2.0
+// Listeners de Autenticação OAuth 2.0 e Tela de Bloqueio
 googleLoginBtn.addEventListener('click', () => realizarLoginGoogle(true));
 googleLogoutBtn.addEventListener('click', realizarLogoutGoogle);
+if (retryAuthBtn) retryAuthBtn.addEventListener('click', () => realizarLoginGoogle(true));
+if (deniedLogoutBtn) deniedLogoutBtn.addEventListener('click', realizarLogoutGoogle);
 
 // Listeners de Ações de Topo e Gaveta de Histórico
 newChatBtn.addEventListener('click', () => iniciarNovaConversa(true));
@@ -211,7 +217,8 @@ async function realizarLoginSilencioso() {
           // Validação obrigatória na Planilha Google Sheets
           const validation = await validarUsuarioNaPlanilha(profile.email);
           if (!validation.authorized) {
-            exibirTelaLogin(validation.message);
+            const errorMsg = validation.message || "Usuário não autorizado a acessar o assistente. Favor contatar o administrador.";
+            exibirTelaAcessoNegado(profile.email, errorMsg);
             resolve(false);
             return;
           }
@@ -260,7 +267,7 @@ async function realizarLoginGoogle(interactive = true) {
       const validation = await validarUsuarioNaPlanilha(profile.email);
       if (!validation.authorized) {
         const errorMsg = "Usuário não autorizado a acessar o assistente. Favor contatar o administrador.";
-        exibirTelaLogin(errorMsg);
+        exibirTelaAcessoNegado(profile.email, errorMsg);
         return;
       }
 
@@ -322,10 +329,12 @@ function exibirPerfilLogado(profile) {
   userEmail.textContent = profile.email;
   mainAppScreen.classList.remove('hidden');
   loginScreen.classList.add('hidden');
+  if (accessDeniedScreen) accessDeniedScreen.classList.add('hidden');
 }
 
 function exibirTelaLogin(errorMessage = null) {
   mainAppScreen.classList.add('hidden');
+  if (accessDeniedScreen) accessDeniedScreen.classList.add('hidden');
   loginScreen.classList.remove('hidden');
 
   if (loginErrorMsg) {
@@ -336,6 +345,17 @@ function exibirTelaLogin(errorMessage = null) {
       loginErrorMsg.classList.add('hidden');
       loginErrorMsg.textContent = '';
     }
+  }
+}
+
+function exibirTelaAcessoNegado(email, reason = null) {
+  mainAppScreen.classList.add('hidden');
+  loginScreen.classList.add('hidden');
+  if (accessDeniedScreen) {
+    accessDeniedScreen.classList.remove('hidden');
+    if (deniedUserEmail) deniedUserEmail.textContent = email || "e-mail não identificado";
+    const reasonEl = document.getElementById('access-denied-reason');
+    if (reasonEl && reason) reasonEl.textContent = reason;
   }
 }
 

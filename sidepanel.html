@@ -27,6 +27,22 @@
     </div>
   </div>
 
+  <!-- TELA 1.5: Tela de Acesso Negado (Exibido se e-mail não estiver cadastrado/ativo na planilha) -->
+  <div id="access-denied-screen" class="access-denied-screen hidden">
+    <div class="auth-card access-denied-card">
+      <span class="denied-icon">🛑</span>
+      <h2>Acesso Não Autorizado</h2>
+      <p id="access-denied-reason">Usuário não autorizado a acessar o assistente. Favor contatar o administrador.</p>
+      <div class="denied-user-badge">
+        <span id="denied-user-email">email@exemplo.com</span>
+      </div>
+      <div class="denied-actions">
+        <button id="retry-auth-btn" class="btn-primary-sm">🔄 Tentar Novamente</button>
+        <button id="denied-logout-btn" class="btn-logout-sm">🚪 Sair / Trocar Conta</button>
+      </div>
+    </div>
+  </div>
+
   <!-- TELA 2: Aplicação Principal (Exibida somente após o login) -->
   <div id="main-app-screen" class="main-app-screen hidden">
     <!-- Header com Perfil do Usuário e Ações -->

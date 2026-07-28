@@ -118,13 +118,13 @@ Cada tarefa é atômica. Diga **"próxima"** ou o **número da tarefa** para exe
 ### Tarefa 17: Criar template da planilha de controle
 - **O quê**: Gerar documentação com a estrutura exata da planilha (aba `Usuarios`, colunas E-mail/Nome/Status/Skills Permitidas/Observações) e instruções para criar e configurar.
 - **Arquivos**: `docs/PLANILHA_CONTROLE.md` [NEW]
-- **Status**: `[ ]`
+- **Status**: `[x]`
 
 ### Tarefa 18: Implementar tela de acesso negado
 - **O quê**: Quando o proxy retorna erro de autorização (`Acesso não autorizado`), exibir tela de bloqueio com mensagem amigável e botão para tentar novamente ou fazer logout. Impedir acesso ao chat.
 - **Arquivos**: `sidepanel.js`, `sidepanel.html`, `sidepanel.css`
 - **Depende de**: Tarefa 16
-- **Status**: `[ ]`
+- **Status**: `[x]`
 
 ---
 

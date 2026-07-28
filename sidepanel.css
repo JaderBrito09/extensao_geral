@@ -695,6 +695,74 @@ textarea:focus {
   display: none !important;
 }
 
+/* Tela 1.5: Tela de Acesso Negado */
+.access-denied-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #fdf2f2;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
+
+.access-denied-screen.hidden {
+  display: none !important;
+}
+
+.access-denied-card {
+  border-color: #f87171;
+  box-shadow: 0 4px 20px rgba(220, 38, 38, 0.12);
+}
+
+.denied-icon {
+  font-size: 48px;
+}
+
+.denied-user-badge {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.denied-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.btn-primary-sm {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-logout-sm {
+  background: transparent;
+  color: var(--danger-color);
+  border: 1px solid var(--danger-color);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* Tela 2: Aplicação Principal */
 .main-app-screen {
   display: flex;
