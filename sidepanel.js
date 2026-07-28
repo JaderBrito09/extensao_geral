@@ -975,25 +975,50 @@ function triggerDomDownloadInPage(fileInfo) {
     }
     if (!targetEl) {
       const candidates = Array.from(document.querySelectorAll('[download-url], .a6S, [aria-label*="Download"], [aria-label*="download"], [aria-label*="Baixar"], [data-tooltip*="Baixar"], [data-tooltip*="Download"]'));
-      targetEl = candidates[fileInfo.index] || candidates.find(c => (c.getAttribute('aria-label') || c.getAttribute('data-tooltip') || '').includes(fileInfo.name));
+      targetEl = candidates[fileInfo.index] || candidates.find(c => {
+        const text = (c.getAttribute('aria-label') || c.getAttribute('data-tooltip') || c.textContent || '').toLowerCase();
+        return text.includes(fileInfo.name.toLowerCase());
+      });
     }
+
     if (targetEl) {
-      targetEl.click();
+      // Dispara uma sequência completa de eventos para garantir o clique em elementos dinâmicos do Gmail/React/Angular
+      ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click'].forEach(eventType => {
+        const event = new MouseEvent(eventType, {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          buttons: 1
+        });
+        targetEl.dispatchEvent(event);
+      });
+
+      // Se for um link <a> dentro ou no próprio elemento
+      const linkEl = targetEl.tagName === 'A' ? targetEl : targetEl.querySelector('a') || targetEl.closest('a');
+      if (linkEl && linkEl.href) {
+        window.open(linkEl.href, '_blank');
+      }
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error("Erro no script de clique do DOM:", e);
+  }
 }
 
 async function fetchAndAttachFile(url, filename) {
+  if (!url || url === '#' || url.startsWith('javascript:')) return;
   try {
     const resp = await fetch(url);
     if (resp.ok) {
       const text = await resp.text();
-      attachedFiles.push({
-        name: filename,
-        type: resp.headers.get('content-type') || 'text/plain',
-        content: text
-      });
-      renderAttachedFilesUI();
+      // Adiciona aos anexos se o conteúdo textual for aproveitável
+      if (text && text.length > 5) {
+        attachedFiles.push({
+          name: filename,
+          type: resp.headers.get('content-type') || 'text/plain',
+          content: text
+        });
+        renderAttachedFilesUI();
+      }
     }
   } catch (e) {
     console.warn("Não foi possível carregar o texto diretamente da URL do anexo:", e);
@@ -1005,7 +1030,39 @@ async function baixarArquivoUnitario(file) {
   const filename = typeof file === 'object' ? file.name : 'arquivo_download';
   const isDomClick = typeof file === 'object' ? file.isDomClick : false;
 
-  if (isDomClick) {
+  // 1. Se houver URL válida diferente de '#', tenta usar a API de downloads com 'saveAs'
+  if (url && url !== '#' && !url.startsWith('javascript:')) {
+    if (typeof chrome !== 'undefined' && chrome.downloads) {
+      chrome.downloads.download({ 
+        url: url, 
+        filename: filename || undefined,
+        saveAs: true 
+      }, async (downloadId) => {
+        if (chrome.runtime.lastError) {
+          // Se falhar por autenticação/CORS, executa o clique via DOM na página
+          if (isDomClick) {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (tab && tab.id) {
+              await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: triggerDomDownloadInPage,
+                args: [file]
+              });
+            }
+          }
+        }
+      });
+    } else {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || '';
+      a.click();
+    }
+
+    // Tentar ler e carregar o arquivo diretamente nos anexos da conversa
+    await fetchAndAttachFile(url, filename);
+  } else if (isDomClick) {
+    // 2. Se for um anexo dinâmico do Gmail sem URL estática pública
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab && tab.id) {
@@ -1018,23 +1075,6 @@ async function baixarArquivoUnitario(file) {
     } catch (e) {
       console.warn("Erro ao simular clique no DOM para download:", e);
     }
-  } else if (url && url !== '#') {
-    if (typeof chrome !== 'undefined' && chrome.downloads) {
-      // Prompt 'Salvar como...' abrindo a caixa do sistema operacional
-      chrome.downloads.download({ 
-        url: url, 
-        filename: filename || undefined,
-        saveAs: true 
-      });
-    } else {
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename || '';
-      a.click();
-    }
-
-    // Tentar ler e carregar o arquivo diretamente nos anexos da conversa
-    await fetchAndAttachFile(url, filename);
   }
 }
 
