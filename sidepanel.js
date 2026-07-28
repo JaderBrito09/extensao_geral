@@ -1039,11 +1039,11 @@ async function baixarArquivoUnitario(file) {
 
   // Emitir orientação amigável no chat para instruir o usuário
   appendMessageUI(
-    `📥 **Download de Arquivo Solicitado: ${filename}**\n\n` +
-    `Acionamos a tentativa de download na página ativa.\n\n` +
-    `💡 **Se a caixa de salvamento não abrir automaticamente:**\n` +
-    `1. Clique no botão de download do anexo diretamente no e-mail/página.\n` +
-    `2. Em seguida, clique no botão **📎 Anexo (+)** abaixo no chat para enviar o arquivo baixado e incluí-lo na análise da IA!`,
+    `📄 **Arquivo Selecionado: ${filename}**\n\n` +
+    `A página aberta não permite o download direto de arquivos através da extensão por restrições de segurança ou sessão.\n\n` +
+    `💡 **Como prosseguir:**\n` +
+    `1. Baixe o arquivo **${filename}** diretamente na página aberta no navegador.\n` +
+    `2. Clique no botão de **📎 Anexo (+)** abaixo no chat (ou arraste o arquivo) para enviá-lo ao assistente.`,
     'ai-msg',
     false
   );
