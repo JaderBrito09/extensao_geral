@@ -1,0 +1,17 @@
+# Arquivos temporários e de build
+node_modules/
+.DS_Store
+.vscode/
+.idea/
+*.log
+
+# Chaves privadas e credenciais sensíveis
+*.pem
+*.key
+*.credentials
+client_secret_*.json
+env.json
+.env
+
+# Diretório de testes temporários e cache
+.tests/
