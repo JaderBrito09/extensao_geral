@@ -7,7 +7,14 @@
       "slug": "geral",
       "name": "Análise e Consulta Livre (Geral)",
       "category": "Geral",
-      "file": "skills/geral.md"
+      "file": "skills/geral/SKILL.md"
+    },
+    {
+      "id": "SKILL-GESTAOGOV-001",
+      "slug": "gestaogov",
+      "name": "Gestão e Governança Pública (IMGG)",
+      "category": "Governança",
+      "file": "skills/gestaogov/SKILL.md"
     }
   ]
 }
