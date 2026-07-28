@@ -983,8 +983,29 @@ function triggerDomDownloadInPage(fileInfo) {
   } catch (e) {}
 }
 
+async function fetchAndAttachFile(url, filename) {
+  try {
+    const resp = await fetch(url);
+    if (resp.ok) {
+      const text = await resp.text();
+      attachedFiles.push({
+        name: filename,
+        type: resp.headers.get('content-type') || 'text/plain',
+        content: text
+      });
+      renderAttachedFilesUI();
+    }
+  } catch (e) {
+    console.warn("Não foi possível carregar o texto diretamente da URL do anexo:", e);
+  }
+}
+
 async function baixarArquivoUnitario(file) {
-  if (file.isDomClick) {
+  const url = typeof file === 'object' ? file.url : file;
+  const filename = typeof file === 'object' ? file.name : 'arquivo_download';
+  const isDomClick = typeof file === 'object' ? file.isDomClick : false;
+
+  if (isDomClick) {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab && tab.id) {
@@ -997,17 +1018,23 @@ async function baixarArquivoUnitario(file) {
     } catch (e) {
       console.warn("Erro ao simular clique no DOM para download:", e);
     }
-  } else {
-    const url = file.url;
-    const filename = file.name;
+  } else if (url && url !== '#') {
     if (typeof chrome !== 'undefined' && chrome.downloads) {
-      chrome.downloads.download({ url, filename: filename || undefined });
+      // Prompt 'Salvar como...' abrindo a caixa do sistema operacional
+      chrome.downloads.download({ 
+        url: url, 
+        filename: filename || undefined,
+        saveAs: true 
+      });
     } else {
       const a = document.createElement('a');
       a.href = url;
       a.download = filename || '';
       a.click();
     }
+
+    // Tentar ler e carregar o arquivo diretamente nos anexos da conversa
+    await fetchAndAttachFile(url, filename);
   }
 }
 
