@@ -77,10 +77,17 @@ let currentUser = null; // { name, email, picture, token }
 // Event Listeners
 document.addEventListener('DOMContentLoaded', initSidePanel);
 sendBtn.addEventListener('click', processarRequisicao);
+// Ajuste automático de altura da textarea ao digitar (Estilo Gemini)
+userInputEl.addEventListener('input', () => {
+  userInputEl.style.height = '38px';
+  userInputEl.style.height = Math.min(userInputEl.scrollHeight, 120) + 'px';
+});
+
 userInputEl.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     processarRequisicao();
+    userInputEl.style.height = '38px';
   }
 });
 clearHistoryBtn.addEventListener('click', limparConversaAtual);

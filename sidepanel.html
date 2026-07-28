@@ -105,6 +105,8 @@
       <span id="page-info-badge" class="badge">Aba ativa pronta</span>
       <button id="clear-history-btn" class="text-btn" title="Limpar conversa">Limpar histórico</button>
     </div>
+
+    <!-- Container Unificado de Entrada (Estilo Gemini) -->
     <div class="input-container">
       <div class="attach-menu-wrapper">
         <button id="attach-btn" class="attach-btn" type="button" title="Adicionar mídias e arquivos">+</button>
@@ -124,10 +126,11 @@
         </div>
       </div>
       <input type="file" id="file-input" multiple hidden>
-      <textarea id="user-input" placeholder="Pergunte algo sobre a página ativa... (Shift+Enter pula linha)"></textarea>
-      <button id="send-btn" class="send-btn">
-        <span>Enviar</span>
-        <span class="send-icon">➤</span>
+      <textarea id="user-input" rows="1" placeholder="Pergunte algo sobre a página ativa... (Shift+Enter pula linha)"></textarea>
+      <button id="send-btn" class="send-btn" title="Enviar mensagem">
+        <svg class="send-svg-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
       </button>
     </div>
   </footer>
