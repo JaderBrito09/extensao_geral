@@ -824,26 +824,42 @@ async function limparConversaAtual() {
 
 // Função injetada no DOM para extrair links de download na aba ativa
 function extractPageFilesFromDOM() {
-  const supportedExts = ['.pdf', '.txt', '.csv', '.json', '.docx', '.xlsx', '.zip', '.xml', '.md'];
-  const links = Array.from(document.querySelectorAll('a[href]'));
+  const supportedExts = ['.pdf', '.txt', '.csv', '.json', '.docx', '.xlsx', '.doc', '.xls', '.zip', '.rar', '.7z', '.xml', '.md', '.ods', '.odt'];
+  const elements = Array.from(document.querySelectorAll('a[href], [download], [data-href], embed[src], object[data], iframe[src]'));
   const fileMap = new Map();
 
-  links.forEach(a => {
-    const href = a.href;
-    if (!href || href.startsWith('javascript:') || href.startsWith('#')) return;
+  elements.forEach(el => {
+    const rawUrl = el.href || el.getAttribute('download') || el.getAttribute('data-href') || el.src || el.data;
+    if (!rawUrl || typeof rawUrl !== 'string' || rawUrl.startsWith('javascript:') || rawUrl.startsWith('#')) return;
 
     try {
-      const urlObj = new URL(href, document.baseURI);
+      const urlObj = new URL(rawUrl, document.baseURI);
+      const fullUrl = urlObj.href;
       const pathname = urlObj.pathname.toLowerCase();
-      const isSupported = supportedExts.some(ext => pathname.endsWith(ext)) || a.hasAttribute('download');
+      const searchParams = urlObj.search.toLowerCase();
+      
+      const hasExtension = supportedExts.some(ext => pathname.endsWith(ext) || searchParams.includes(ext));
+      const hasDownloadAttr = el.hasAttribute('download') || el.getAttribute('rel')?.includes('download');
+      const isSupported = hasExtension || hasDownloadAttr;
       
       if (isSupported) {
-        let filename = a.getAttribute('download') || pathname.split('/').pop() || 'arquivo';
-        filename = decodeURIComponent(filename).trim();
-        if (!filename) filename = 'arquivo_download';
+        let filename = el.getAttribute('download') || pathname.split('/').pop() || 'arquivo';
+        try {
+          filename = decodeURIComponent(filename).trim();
+        } catch (err) {}
 
-        if (!fileMap.has(href)) {
-          fileMap.set(href, { name: filename, url: href });
+        if (!filename || filename === '/' || filename.length < 2) {
+          filename = 'documento_download';
+        }
+
+        // Se o nome não tiver extensão visível, tenta inferir a extensão a partir da URL
+        const extFound = supportedExts.find(ext => pathname.endsWith(ext) || searchParams.includes(ext));
+        if (extFound && !filename.toLowerCase().endsWith(extFound)) {
+          filename += extFound;
+        }
+
+        if (!fileMap.has(fullUrl)) {
+          fileMap.set(fullUrl, { name: filename, url: fullUrl });
         }
       }
     } catch (e) {}
