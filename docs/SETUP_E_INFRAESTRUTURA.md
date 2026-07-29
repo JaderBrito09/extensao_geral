@@ -15,8 +15,9 @@ Preencha os valores abaixo para referência da equipe de desenvolvimento:
 | **Número do Projeto GCP** | `1030154870179` | Número de identificação numérica do GCP |
 | **Conta GCP Administradora** | `jaderbrito.fernandes@sefaz.mt.gov.br` | Conta proprietária do projeto GCP |
 | **ID da Extensão (Loja Oficial)** | `hjgeabliemiejipphdibnclofjiifnna` | ID oficial atribuído pela Chrome Web Store |
-| **ID da Extensão (Dev Local)** | `iobhoockjdkooadefbhlolggdlikdoke` | ID provisório do ambiente local (`chrome://extensions`) |
-| **OAuth Client ID (Dev Local)** | `1030154870179-c8ri4egjl3o6hiigec84c8aou3g5lo3p.apps.googleusercontent.com` | Credencial vinculada ao ID local provisório |
+| **OAuth Client ID (Loja Oficial)** | `1030154870179-60e6j1amgkpn2apsj5i0nf6lurs58k54.apps.googleusercontent.com` | Credencial vinculada à publicação oficial na Web Store |
+| **ID da Extensão (Dev Local)** | `iobhoockjdkooadefbhlolggdlikdoke` | ID provisório gerado em `chrome://extensions` |
+| **OAuth Client ID (Dev Local)** | `1030154870179-c8ri4egjl3o6hiigec84c8aou3g5lo3p.apps.googleusercontent.com` | Credencial vinculada ao desenvolvimento local |
 | **Endpoint do Apps Script Proxy** | `https://script.google.com/macros/s/AKfycbxB0r52U-lcIIZQKslhDBaROeVz-aqNmD1j1RrzUzFUDzxGJyZWwmJK8pjaARBc0u3s/exec` | URL pública do Web App no Google Apps Script |
 | **Repositório do Código-Fonte** | `JaderBrito09/extensao_geral` | Repositório exclusivo do código da extensão, Apps Script e testes |
 | **Repositório Exclusivo de Skills** | `JaderBrito09/assistente-jorge-skills` | Repositório dedicado para arquivos Markdown (`.md`) e `skills.json` |
