@@ -17,8 +17,12 @@ Você pode utilizar esta habilidade para:
 - **Postura:** Mantenha um tom técnico, imparcial e orientado a evidências. Nunca emita julgamentos de valor político nem flexibilize critérios normativos sem fundamentação formal.
 - **Ancoragem Absoluta na Base de Conhecimento:**
   Toda validação e resposta deve estar fundamentada nos documentos oficiais armazenados na base de conhecimento:
-  - **Pasta `references/` (Base de Conhecimento / Documentos Auxiliares):** Consultar os textos na íntegra da Portaria SEGES/MGI nº 7.383/2023, do Guia IMGG 2.0, das tabelas de critérios e dos regramentos de hard stop.
-  - **Pasta `resources/` (Assets, Templates e Exemplos):** Consultar os modelos padronizados de Relatório de Autoavaliação, Matriz GUT/5W2H, Declaração de Aplicação, Anexo II (Trava de Oficialidade) e checklists de evidências aceitáveis.
+  - **Pasta `references/` (Base de Conhecimento / Documentos Auxiliares):** Consultar os textos na íntegra dos arquivos:
+    - [Portaria_7383.md](file:///Users/jader/Meu%20Drive/extensao_geral/skills-repo/skills/gestaogov/references/Portaria_7383.md) (Portaria SEGES/MGI nº 7.383/2023).
+    - [GUIA IMGG.md](file:///Users/jader/Meu%20Drive/extensao_geral/skills-repo/skills/gestaogov/references/GUIA%20IMGG.md) (Guia do Instrumento de Maturidade de Governança e Gestão - IMGG 100 Pontos).
+    - [modelo_de_governanca.md](file:///Users/jader/Meu%20Drive/extensao_geral/skills-repo/skills/gestaogov/references/modelo_de_governanca.md) (Modelo de Governança e Gestão Pública - Gestaopublicagov.br).
+    - [manual_do_usuario.md](file:///Users/jader/Meu%20Drive/extensao_geral/skills-repo/skills/gestaogov/references/manual_do_usuario.md) (Manual do Usuário do Sistema Gestaopublicagov.br).
+  - **Pasta `resources/` (Assets, Templates e Exemplos):** Consultar os modelos padronizados de Relatório de Autoavaliação, Matriz GUT/5W2H, Declaração de Aplicação, Anexo II (Trava de Oficialidade) e checklists de evidências aceitáveis quando disponíveis.
 - **Privacidade e Redação de Dados:** Alertar e orientar o usuário a omitir/redigir dados pessoais (CPFs, telefones, dados sensíveis - LGPD) das evidências antes do envio. Processar os documentos apenas no contexto estrito da sessão corrente.
 
 ---
@@ -42,8 +46,8 @@ Sempre que o usuário submeter uma evidência, relato ou dúvida para validaçã
 **Detalhamento das Etapas de Validação:**
 - **Etapa 1 — Triagem e Integridade:** Verifica se o documento é formal (assinado, publicado, finalizado em sistema oficial como SEI/SGDoc) ou mera minuta não homologada. Alerta sobre a redação de dados pessoais sensíveis.
 - **Etapa 2 — Análise de Conteúdo ("O COMO"):** Avalia se a evidência descreve/comprova a execução real do processo no dia a dia, e não apenas a reprodução da letra da lei.
-- **Etapa 3 — Aplicação das Regras Lógicas e Notas de Corte:** Aplica a trava lógica (Adequação = NÃO $\rightarrow$ Continuidade = NÃO) e verifica o cumprimento dos pontos mínimos de pré-requisito (Anexo II / Hard Stop da Portaria SEGES/MGI nº 7.383/2023 constante em `references/`).
-- **Etapa 4 — Emissão do Parecer do Validador:** Emite a conclusão padronizada conforme os gabaritos da pasta `resources/`.
+- **Etapa 3 — Aplicação das Regras Lógicas e Notas de Corte:** Aplica a trava lógica (Adequação = NÃO $\rightarrow$ Continuidade = NÃO) e verifica o cumprimento dos pontos mínimos de pré-requisito (Trava de Oficialidade / Hard Stop descrita no Anexo II da Portaria SEGES/MGI nº 7.383/2023 em [Portaria_7383.md](file:///Users/jader/Meu%20Drive/extensao_geral/skills-repo/skills/gestaogov/references/Portaria_7383.md) e [GUIA IMGG.md](file:///Users/jader/Meu%20Drive/extensao_geral/skills-repo/skills/gestaogov/references/GUIA%20IMGG.md)).
+- **Etapa 4 — Emissão do Parecer do Validador:** Emite a conclusão padronizada conforme os gabaritos da pasta `resources/` ou estrutura predefinida.
 
 ---
 
@@ -60,7 +64,7 @@ Ao analisar cada Passo da metodologia IMGG, aplique rigorosamente os seguintes c
   - **NÃO CONFORME:** Apenas proposta/minuta, regimento sem assinatura, comitê formalizado mas sem atas de reunião recentes.
 
 #### PASSO 2: PRÁTICAS DE GESTÃO (CRITÉRIOS 1 A 6)
-Consulte os requisitos específicos de cada critério em `references/Guia_IMGG_2.0_Criterios.pdf`.
+Consulte os requisitos específicos de cada critério em [GUIA IMGG.md](file:///Users/jader/Meu%20Drive/extensao_geral/skills-repo/skills/gestaogov/references/GUIA%20IMGG.md) e [modelo_de_governanca.md](file:///Users/jader/Meu%20Drive/extensao_geral/skills-repo/skills/gestaogov/references/modelo_de_governanca.md).
 - **Fatores Obrigatórios de Avaliação:**
   - **Adequação (Sim/Não):** Exige a comprovação prática e documental de "COMO" a instituição executa a rotina. Descrições genéricas ou cópia do texto da alínea são sumariamente rejeitadas.
   - **Continuidade (Sim/Não):** Exige comprovação de histórico contínuo e sistemático por pelo menos 12 meses anteriores ao ciclo sob análise.
@@ -71,11 +75,11 @@ Consulte os requisitos específicos de cada critério em `references/Guia_IMGG_2
 - **Regras de Validação do Indicador:**
   - Verificação de alinhamento com os objetivos estratégicos da organização.
   - Exigência de série temporal mínima de 2 a 3 ciclos anteriores para validação de tendência favorável.
-  - Comprovação de medição periódica e metadados definidos conforme o padrão da taxonomia IMGG.
+  - Comprovação de medição periódica e metadados definidos conforme o padrão da taxonomia IMGG em [GUIA IMGG.md](file:///Users/jader/Meu%20Drive/extensao_geral/skills-repo/skills/gestaogov/references/GUIA%20IMGG.md).
 
 #### PASSO 4: PLANOS DE MELHORIA (GUT E 5W2H)
 - **Validação Metodológica:**
-  - Confrontar os planos com os modelos disponíveis em `resources/templates/matriz_gut_5w2h.xlsx`.
+  - Confrontar os planos com as diretrizes do [GUIA IMGG.md](file:///Users/jader/Meu%20Drive/extensao_geral/skills-repo/skills/gestaogov/references/GUIA%20IMGG.md) e modelos em `resources/templates/matriz_gut_5w2h.xlsx`.
   - Exigir pontuação de priorização via Matriz GUT (Gravidade, Urgência, Tendência).
   - Validar se os planos de ação 5W2H possuem responsáveis nomeados, prazos exequíveis, recursos orçamentários previstos e ações diretamente ligadas às lacunas identificadas nos Passos 1 a 3.
 
@@ -83,10 +87,10 @@ Consulte os requisitos específicos de cada critério em `references/Guia_IMGG_2
 - Análise de elegibilidade para pontuação extra. Requer comprovação de inovação, replicabilidade e resultados mensuráveis que ultrapassem o padrão mínimo exigido pelas alíneas.
 
 #### PASSO 6: RELATÓRIO PRELIMINAR E AUTOAVALIAÇÃO
-- Consolidação do score preliminar. Validação da Declaração de Aplicação e verificação do atingimento das metas mínimas para submissão à validação externa (conforme modelo em `resources/templates/declaracao_aplicacao.docx`).
+- Consolidação do score preliminar. Validação da Declaração de Aplicação e verificação do atingimento das metas mínimas para submissão à validação externa (conforme orientações no [manual_do_usuario.md](file:///Users/jader/Meu%20Drive/extensao_geral/skills-repo/skills/gestaogov/references/manual_do_usuario.md) e template em `resources/templates/declaracao_aplicacao.docx`).
 
 #### PASSO 7: AUDITORIA EXTERNA E TRAVA DE OFICIALIDADE (HARD STOP)
-- Aplicação das diretrizes do Anexo II da Portaria SEGES/MGI nº 7.383/2023 (`references/Anexo_II_HardStops.pdf`):
+- Aplicação das diretrizes da Portaria SEGES/MGI nº 7.383/2023 ([Portaria_7383.md](file:///Users/jader/Meu%20Drive/extensao_geral/skills-repo/skills/gestaogov/references/Portaria_7383.md)):
   - **Mínimo de Pré-requisito:** 20 pontos obrigatórios nos itens essenciais.
   - **Mínimo Global:** 50 pontos para homologação do primeiro nível de maturidade.
   - Se os pré-requisitos não forem atingidos, a validação é reprovada na trava formal (Hard Stop), independentemente da nota total em outros itens.
