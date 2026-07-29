@@ -107,6 +107,7 @@ Este documento reúne o planejamento de entregas do **Assistente do Jorge**, inc
 - `[x]` Tarefa 26: 17 Testes de integração automatizados com 100% de aprovação
 
 ### Sprint 12 — Preparação para Deploy na Chrome Web Store
-- `[ ]` Tarefa 27: Gerar pacote compactado `.zip` para submissão
-- `[ ]` Tarefa 28: Validação final de escopos no GCP Console
-- `[ ]` Tarefa 29: Captura de screenshots oficiais e elaboração de texto da loja
+- `[x]` Tarefa 27: Gerar pacote compactado `.zip` (`assistente-jorge-extension-v1.0.0.zip`) para submissão
+- `[x]` Tarefa 28: Validação final de escopos no GCP Console (`identity`, `storage`, `tabs`, `scripting`, `sidePanel`, `downloads`)
+- `[x]` Tarefa 29: Captura de screenshots oficiais e elaboração de texto da loja
+

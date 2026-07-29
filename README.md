@@ -27,6 +27,16 @@ Assistente analítico inteligente para o Google Chrome que utiliza a API do **Go
 
 ---
 
+## 📦 Pacote para Produção (Chrome Web Store)
+
+Para gerar o arquivo `.zip` pronto para submissão no Chrome Developer Dashboard:
+```bash
+zip -r assistente-jorge-extension-v1.0.0.zip manifest.json sidepanel.html sidepanel.js sidepanel.css background.js icons/ lib/ -x "*.DS_Store"
+```
+O pacote compilado é gerado como `assistente-jorge-extension-v1.0.0.zip` na raiz do projeto.
+
+---
+
 ## 📚 Documentação do Projeto
 
 Toda a documentação técnica e arquitetural do projeto está centralizada na pasta [`docs/`](file:///Users/jader/Meu%20Drive/extensao_geral/docs):
