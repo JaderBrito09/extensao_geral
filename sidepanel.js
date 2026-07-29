@@ -325,6 +325,7 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
               const parsed = parseSkillMarkdown(mdText, skillId);
               parsed.id = skillId;
               parsed.slug = item.slug || skillId;
+              parsed.label = item.name || parsed.label || skillId;
               parsed.category = item.category || parsed.category || "Geral";
               downloadedSkills[skillId] = parsed;
             }
