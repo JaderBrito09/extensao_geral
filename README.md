@@ -44,6 +44,7 @@ Toda a documentação técnica e arquitetural do projeto está centralizada na p
 | Documento | Descrição |
 | :--- | :--- |
 | 🛠️ [SETUP_E_INFRAESTRUTURA.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/SETUP_E_INFRAESTRUTURA.md) | Manual de Instalação, Deploy do Apps Script Proxy, Planilha de Controle e Tabela Oficial de Parâmetros. |
+| 📖 [MANUAL_DO_USUARIO.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/MANUAL_DO_USUARIO.md) | Guia ilustrado do usuário final: instalação, login, seleção de skills, leitura de documentos e histórico. |
 | 🚀 [GUIA_PUBLICACAO_CHROME_STORE.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/GUIA_PUBLICACAO_CHROME_STORE.md) | Passo a passo de publicação com Acesso Restrito / Não Listado na Chrome Web Store. |
 | 🏗️ [ARQUITETURA_E_ESPECIFICACAO.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/ARQUITETURA_E_ESPECIFICACAO.md) | Arquitetura técnica, especificações de produto, diagramas de fluxo, ADRs de design e políticas de privacidade. |
 | 📋 [BACKLOG_E_USER_STORIES.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/BACKLOG_E_USER_STORIES.md) | Planejamento de produto, Histórias de Usuário (User Stories) e acompanhamento de Sprints (1 a 12). |
