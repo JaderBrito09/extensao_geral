@@ -700,6 +700,8 @@ function exibirTelaAcessoNegado(email, reason = null) {
 }
 
 async function iniciarNovaConversa(shouldNotify = true) {
+  attachedFiles = [];
+  renderAttachedFilesUI();
   activeChatId = 'chat-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
   historyEl.innerHTML = `
     <div class="message ai-msg">
@@ -1308,10 +1310,8 @@ async function processarRequisicao() {
   const { gemini_api_key: storedKey } = await chrome.storage.local.get('gemini_api_key');
   const apiKey = storedKey || "";
 
-  // Snapshot dos anexos atuais para esta requisição
+  // Snapshot dos anexos atuais para esta requisição (permanecem ativos para perguntas subsequentes)
   const currentAttachedFiles = [...attachedFiles];
-  attachedFiles = [];
-  renderAttachedFilesUI();
 
   // 2. Renderizar mensagem do usuário na UI e bloquear controles (T4)
   setUiBusy(true);
