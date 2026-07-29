@@ -14,7 +14,7 @@ Preencha os valores abaixo para referência da equipe de desenvolvimento:
 | **ID do Projeto GCP (PROJECT_ID)** | `ext-geral-oauth-2026` | Identificador único do projeto GCP |
 | **Número do Projeto GCP** | `1030154870179` | Número de identificação numérica do GCP |
 | **Conta GCP Administradora** | `jaderbrito.fernandes@sefaz.mt.gov.br` | Conta proprietária do projeto GCP |
-| **ID da Extensão no Chrome** | `iobhoockjdkooadefbhlolggdlikdoke` | ID alfanumérico em `chrome://extensions/` |
+| **ID da Extensão no Chrome** | `hjgeabliemiejipphdibnclofjiifnna` | ID alfanumérico em `chrome://extensions/` e Chrome Web Store |
 | **OAuth Client ID** | `1030154870179-60e6j1amgkpn2apsj5i0nf6lurs58k54.apps.googleusercontent.com` | ID da credencial para o `manifest.json` |
 | **Endpoint do Apps Script Proxy** | `https://script.google.com/macros/s/AKfycbxB0r52U-lcIIZQKslhDBaROeVz-aqNmD1j1RrzUzFUDzxGJyZWwmJK8pjaARBc0u3s/exec` | URL pública do Web App no Google Apps Script |
 | **Repositório do Código-Fonte** | `JaderBrito09/extensao_geral` | Repositório exclusivo do código da extensão, Apps Script e testes |
