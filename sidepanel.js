@@ -283,16 +283,9 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
   if (typeof chrome === 'undefined' || !chrome.storage) return;
 
   try {
-    const { cached_skills, skills_cache_timestamp } = await chrome.storage.local.get(['cached_skills', 'skills_cache_timestamp']);
-    const now = Date.now();
-
-    if (cached_skills && skills_cache_timestamp && (now - skills_cache_timestamp < SKILLS_CACHE_TTL_MS)) {
-      skillsConfig = { ...skillsConfig, ...cached_skills };
-      popularSelectSkills(allowedSkills);
-    } else {
-      // 1. Tentar ler o catálogo skills.json no repositório principal extensao_geral
-      let catalogUrl = "https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/skills-repo/skills.json";
-      let catResp = await fetch(catalogUrl);
+    // Forçar atualização remota do catálogo skills.json para aplicar novos nomes amigáveis
+    let catalogUrl = "https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/skills-repo/skills.json";
+    let catResp = await fetch(catalogUrl);
 
       if (!catResp.ok) {
         // Fallback local do manifesto skills.json
