@@ -288,6 +288,7 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
 
     if (cached_skills && skills_cache_timestamp && (now - skills_cache_timestamp < SKILLS_CACHE_TTL_MS)) {
       skillsConfig = { ...skillsConfig, ...cached_skills };
+      popularSelectSkills(allowedSkills);
     } else {
       // 1. Tentar ler o catálogo skills.json no repositório principal extensao_geral
       let catalogUrl = "https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/skills-repo/skills.json";
@@ -439,6 +440,13 @@ async function verificarStatusAuth() {
     if (data.user_profile && data.user_profile.email) {
       currentUser = data.user_profile;
       exibirPerfilLogado(currentUser);
+      
+      // Revalida a planilha para garantir o filtro atualizado de skills permitidas
+      const validation = await validarUsuarioNaPlanilha(currentUser.email);
+      if (validation.authorized) {
+        currentUser.allowed_skills = validation.allowed_skills || ["ALL"];
+        await carregarSkillsDinamicas(currentUser.allowed_skills);
+      }
       return;
     }
 
