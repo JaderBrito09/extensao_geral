@@ -1,15 +1,15 @@
 :root {
-  --primary-color: #1a73e8;
-  --primary-hover: #1557b0;
-  --bg-color: #f8f9fa;
+  --primary-color: #4f6ef7;
+  --primary-hover: #3a56d4;
+  --bg-color: #f4f6fb;
   --card-bg: #ffffff;
   --border-color: #e0e0e0;
   --text-main: #202124;
   --text-muted: #5f6368;
-  --user-msg-bg: #e8f0fe;
-  --user-msg-text: #174ea6;
-  --ai-msg-bg: #ffffff;
-  --ai-msg-border: #1a73e8;
+  --user-msg-bg: #eef1ff;
+  --user-msg-text: #3a4fc4;
+  --ai-msg-bg: #fafbff;
+  --ai-msg-border: #6c8ef5;
   --badge-bg: #e6f4ea;
   --badge-text: #137333;
   --danger-color: #d93025;
@@ -20,7 +20,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   margin: 0;
   padding: 0;
   display: flex;
@@ -34,7 +34,7 @@ body {
 /* Header */
 .app-header {
   background: var(--card-bg);
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
@@ -50,7 +50,7 @@ body {
 .logo-area {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .sparkle-icon {
@@ -79,23 +79,61 @@ body {
 
 .header-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
-.btn-secondary {
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 4px;
+/* Ghost button — ações secundárias do header */
+.btn-ghost {
+  background: transparent;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  border-radius: 6px;
   padding: 6px 10px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-ghost:hover {
+  background: var(--primary-color);
+  color: #ffffff;
+}
+
+/* Mantido para compatibilidade — equivale ao ghost */
+.btn-secondary {
+  background: transparent;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
 }
 
 .btn-secondary:hover {
-  opacity: 0.9;
+  background: var(--primary-color);
+  color: #ffffff;
+}
+
+/* Botão Sair ghost — ao lado do Histórico */
+.btn-logout-ghost {
+  background: transparent;
+  color: var(--danger-color);
+  border: 1px solid var(--danger-color);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-logout-ghost:hover {
+  background: var(--danger-color);
+  color: #ffffff;
 }
 
 .icon-btn-sm {
@@ -170,6 +208,8 @@ body {
 .history-session-item:hover {
   background: #eef2ff;
   border-color: var(--primary-color);
+  transform: translateX(2px);
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
 }
 
 .history-session-item.active {
@@ -194,7 +234,7 @@ body {
 }
 
 .history-session-date {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
@@ -223,6 +263,15 @@ select {
   color: var(--text-main);
   outline: none;
   cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+
+select:focus,
+select:focus-visible {
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 8px rgba(79, 110, 247, 0.18);
+  outline: none;
 }
 
 /* Chat History */
@@ -235,18 +284,24 @@ select {
   gap: 12px;
 }
 
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .message {
   padding: 10px 12px;
   border-radius: 8px;
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.6;
   max-width: 88%;
   word-break: break-word;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  animation: fadeInUp 0.2s ease-out;
 }
 
 .user-msg {
-  background-color: var(--user-msg-bg);
+  background: linear-gradient(135deg, var(--user-msg-bg), #dde9ff);
   color: var(--user-msg-text);
   align-self: flex-end;
   border-bottom-right-radius: 2px;
@@ -306,7 +361,7 @@ textarea:disabled {
 }
 
 .badge {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   background: var(--badge-bg);
   color: var(--badge-text);
@@ -318,13 +373,19 @@ textarea:disabled {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   text-decoration: underline;
 }
 
 .text-btn:hover {
   color: var(--danger-color);
+}
+
+.text-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .input-container {
@@ -437,13 +498,14 @@ textarea {
 }
 
 .btn-logout {
-  background: #fce8e6 !important;
-  color: #c5221f !important;
-  border: 1px solid #fad2cf !important;
+  background: transparent !important;
+  color: var(--danger-color) !important;
+  border: 1px solid var(--danger-color) !important;
 }
 
 .btn-logout:hover {
-  background: #f8d7da !important;
+  background: var(--danger-color) !important;
+  color: #ffffff !important;
 }
 
 .send-btn {
@@ -775,7 +837,7 @@ textarea {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: #ffffff;
+  background: linear-gradient(160deg, #f0f4ff 0%, #fafafa 100%);
   z-index: 9999;
   display: flex;
   justify-content: center;
@@ -798,7 +860,7 @@ textarea {
   padding: 32px 24px;
   background: #ffffff;
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(79, 110, 247, 0.12);
   border: 1px solid var(--border-color);
 }
 
@@ -833,7 +895,7 @@ textarea {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: #fdf2f2;
+  background: #fff8f8;
   z-index: 9999;
   display: flex;
   justify-content: center;
@@ -913,7 +975,7 @@ textarea {
 .auth-card h2 {
   font-size: 18px;
   margin: 0;
-  color: var(--text-main);
+  color: var(--primary-color);
 }
 
 .auth-card p {

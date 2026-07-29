@@ -41,7 +41,11 @@ function doPost(e) {
 
     // Se for apenas uma verificação de status inicial de permissão, retorna sucesso imediato
     if (data.action === "check_user_status") {
-      return jsonResponse({ status: "AUTHORIZED", userEmail: userEmail }, 200);
+      return jsonResponse({
+        status: "AUTHORIZED",
+        userEmail: userEmail,
+        allowed_skills: accessCheck.allowed_skills || ["ALL"]
+      }, 200);
     }
 
     // 2. Recuperar a Chave da API do Gemini das Script Properties
@@ -109,7 +113,8 @@ function doPost(e) {
 }
 
 /**
- * Consulta a Planilha Google Sheets para verificar se o e-mail está ATIVO
+ * Consulta a Planilha Google Sheets para verificar se o e-mail está ATIVO.
+ * Retorna também a lista de Skills Permitidas configurada para o usuário.
  */
 function validarAcessoUsuario(email) {
   try {
@@ -123,7 +128,7 @@ function validarAcessoUsuario(email) {
 
     if (!sheet) {
       // Se a planilha ainda não existir ou não estiver vinculada, permite em modo fallback/dev
-      return { authorized: true, message: "Modo dev: planilha não encontrada" };
+      return { authorized: true, allowed_skills: ["ALL"], message: "Modo dev: planilha não encontrada" };
     }
 
     const data = sheet.getDataRange().getValues();
@@ -131,18 +136,30 @@ function validarAcessoUsuario(email) {
       return { authorized: false, message: "A planilha de usuários está vazia." };
     }
 
-    // Assumindo Coluna A = E-mail, Coluna C = Status (ou busca por colunas)
+    // Busca dinâmica pelas colunas pelo cabeçalho
     const headers = data[0].map(h => h.toString().toLowerCase().trim());
-    const emailIndex = headers.indexOf("e-mail") !== -1 ? headers.indexOf("e-mail") : 0;
-    const statusIndex = headers.indexOf("status") !== -1 ? headers.indexOf("status") : 2;
+    const emailIndex    = headers.indexOf("e-mail")           !== -1 ? headers.indexOf("e-mail")           : 0;
+    const statusIndex   = headers.indexOf("status")           !== -1 ? headers.indexOf("status")           : 2;
+    // Aceita "skills permitidas" ou "skills_permitidas" como nome do cabeçalho
+    const skillsIndex   = headers.indexOf("skills permitidas") !== -1
+                        ? headers.indexOf("skills permitidas")
+                        : headers.indexOf("skills_permitidas");
 
     for (let i = 1; i < data.length; i++) {
-      const rowEmail = data[i][emailIndex].toString().trim().toLowerCase();
+      const rowEmail  = data[i][emailIndex].toString().trim().toLowerCase();
       const rowStatus = data[i][statusIndex].toString().trim().toUpperCase();
 
       if (rowEmail === email) {
         if (rowStatus === "ATIVO" || rowStatus === "ACTIVE" || rowStatus === "SIM" || rowStatus === "1") {
-          return { authorized: true };
+          // Lê e normaliza a coluna "Skills Permitidas" (separada por vírgula)
+          let allowedSkills = ["ALL"];
+          if (skillsIndex !== -1) {
+            const rawSkills = data[i][skillsIndex].toString().trim();
+            if (rawSkills) {
+              allowedSkills = rawSkills.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
+            }
+          }
+          return { authorized: true, allowed_skills: allowedSkills };
         } else {
           return { authorized: false, message: "Sua conta está inativa na planilha de acesso." };
         }
@@ -154,7 +171,7 @@ function validarAcessoUsuario(email) {
   } catch (err) {
     // Em caso de falha de acesso à planilha, autoriza em fallback para não travar desenvolvimento
     console.warn("Aviso na validação de usuário:", err);
-    return { authorized: true, message: "Fallback por erro de leitura" };
+    return { authorized: true, allowed_skills: ["ALL"], message: "Fallback por erro de leitura" };
   }
 }
 

@@ -4,7 +4,7 @@ let skillsConfig = {};
 const MAX_PAGE_CHARS = 30000; // Limite de caracteres para prevenção de estouro de tokens
 const MAX_HISTORY_TURNS = 10; // Número máximo de mensagens do histórico enviadas ao Gemini
 const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash'; // Modelo padrão do Gemini (facilita troca futura)
-const DEFAULT_APPS_SCRIPT_ENDPOINT = "https://script.google.com/macros/s/AKfycbyhb7jguRrdpBdYx335yj7zLXObTm53l0BLL4k3_Q-Ci2x4xP4DeJqQRfWFzlJSn5q_/exec";
+const DEFAULT_APPS_SCRIPT_ENDPOINT = "https://script.google.com/macros/s/AKfycbxB0r52U-lcIIZQKslhDBaROeVz-aqNmD1j1RrzUzFUDzxGJyZWwmJK8pjaARBc0u3s/exec";
 
 /**
  * Obtém a URL do Apps Script Proxy Gateway com migração automática de endpoints antigos
@@ -368,34 +368,33 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
 }
 
 /**
- * Popula o <select> com suporte híbrido: Match por ID imutável, por Categoria (CAT:Nome) ou ALL.
+ * Popula o <select> filtrando as skills pelo ID exato (ex: "SKILL-GERAL-001") ou "ALL" / "*".
+ * Valores separados por vírgula na planilha são aceitos (ex: "SKILL-GERAL-001, SKILL-GESTAOGOV-001").
+ * Match por slug ou categoria não é suportado nesta versão.
  */
 function popularSelectSkills(allowedSkills = ["ALL"]) {
   if (!selectEl) return;
   const currentVal = selectEl.value;
   selectEl.innerHTML = '<option value="" disabled selected>💡 Selecione uma Habilidade...</option>';
 
-  const isAllAllowed = allowedSkills.includes("ALL") || allowedSkills.includes("*");
   const normalizedAllowed = allowedSkills.map(s => s.trim().toUpperCase());
+  const isAllAllowed = normalizedAllowed.includes("ALL") || normalizedAllowed.includes("*");
+
+  // Rastreia IDs já adicionados para evitar duplicatas
+  const addedIds = new Set();
 
   for (const [key, skill] of Object.entries(skillsConfig)) {
     const skillIdUpper = (skill.id || key).toUpperCase();
-    const skillSlugUpper = (skill.slug || key).toUpperCase();
-    const skillCatUpper = `CAT:${(skill.category || "GERAL").toUpperCase()}`;
 
-    const hasPermission = isAllAllowed ||
-      normalizedAllowed.includes(skillIdUpper) ||
-      normalizedAllowed.includes(skillSlugUpper) ||
-      normalizedAllowed.includes(skillCatUpper);
+    // Só exibe a skill se for ALL/* ou o ID exato estiver na lista
+    const hasPermission = isAllAllowed || normalizedAllowed.includes(skillIdUpper);
 
-    if (hasPermission) {
-      // Evita duplicatas caso a chave esteja mapeada por ID e Slug
-      if (!selectEl.querySelector(`option[value="${key}"]`)) {
-        const option = document.createElement('option');
-        option.value = key;
-        option.textContent = skill.label;
-        selectEl.appendChild(option);
-      }
+    if (hasPermission && !addedIds.has(skillIdUpper)) {
+      addedIds.add(skillIdUpper);
+      const option = document.createElement('option');
+      option.value = key;
+      option.textContent = skill.label;
+      selectEl.appendChild(option);
     }
   }
 
@@ -455,6 +454,7 @@ async function verificarStatusAuth() {
 
 /**
  * Consulta o Apps Script Proxy Gateway para validar se o e-mail está cadastrado e com status ATIVO na planilha.
+ * Retorna também a lista de skills permitidas (allowed_skills) configurada para o usuário.
  */
 async function validarUsuarioNaPlanilha(email) {
   try {
@@ -480,11 +480,16 @@ async function validarUsuarioNaPlanilha(email) {
       return { authorized: false, message: "Erro na validação: " + data.error };
     }
 
-    return { authorized: true };
+    // Normaliza a lista de skills permitidas retornada pelo backend
+    const allowedSkills = Array.isArray(data.allowed_skills) && data.allowed_skills.length > 0
+      ? data.allowed_skills.map(s => s.trim().toUpperCase()).filter(Boolean)
+      : ["ALL"];
+
+    return { authorized: true, allowed_skills: allowedSkills };
   } catch (err) {
     console.warn("Aviso na validação de permissão:", err);
     // Em modo offline/dev fallback
-    return { authorized: true };
+    return { authorized: true, allowed_skills: ["ALL"] };
   }
 }
 
@@ -515,6 +520,7 @@ async function realizarLoginSilencioso() {
           currentUser = profile;
           await chrome.storage.session.set({ user_profile: profile });
           exibirPerfilLogado(profile);
+          await carregarSkillsDinamicas(validation.allowed_skills || ["ALL"]);
           resolve(true);
         } catch (err) {
           resolve(false);
@@ -558,6 +564,7 @@ async function revalidarPermissaoUsuario() {
       currentUser = profile;
       await chrome.storage.session.set({ user_profile: profile });
       exibirPerfilLogado(profile);
+      await carregarSkillsDinamicas(validation.allowed_skills || ["ALL"]);
     } else {
       const errorMsg = validation.message || "Usuário não autorizado a acessar o assistente. Favor contatar o administrador.";
       exibirTelaAcessoNegado(profile.email, errorMsg);
@@ -613,6 +620,7 @@ async function realizarLoginGoogle(interactive = true) {
 
       await chrome.storage.session.set({ user_profile: profile });
       exibirPerfilLogado(profile);
+      await carregarSkillsDinamicas(validation.allowed_skills || ["ALL"]);
     } else {
       if (interactive) exibirTelaLogin();
     }

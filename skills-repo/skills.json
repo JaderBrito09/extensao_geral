@@ -5,14 +5,14 @@
     {
       "id": "SKILL-GERAL-001",
       "slug": "geral",
-      "name": "Análise e Consulta Livre (Geral)",
+      "name": "Consulta Livre",
       "category": "Geral",
       "file": "skills/geral/SKILL.md"
     },
     {
       "id": "SKILL-GESTAOGOV-001",
       "slug": "gestaogov",
-      "name": "Gestão e Governança Pública (IMGG)",
+      "name": "Validador IMGG 100 Pontos",
       "category": "Governança",
       "file": "skills/gestaogov/SKILL.md"
     }

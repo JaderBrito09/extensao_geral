@@ -34,43 +34,16 @@ Firefox, nas suas últimas versões disponíveis.
 O Sistema Gestaopublicagov.br é integrado ao gov.br, dessa forma, o usuário, para acessar o
 sistema, deverá, obrigatoriamente, ter cadastro no gov.br.
 1. Abra o navegador (browser) de sua preferência.
-2. Para ter acesso ao ambiente de produção, digite https://smeg.economia.gov.br e pressione
-Enter.
-Para
-ter
-acesso
-ao
-ambiente
-de
-treinamento,
-digite
-https://modulos-
-hom.plataformamaisbrasil.gov.br e pressione Enter. Atenção! Para navegar no ambiente de
-treinamento, é necessário a criação de um usuário de demonstração pela Secretaria-Executiva
-da
-Rede
-de
-Parcerias.
-Para
-solicitá-lo,
-envie
-e-mail
-para
-treinamento.transferencias@economia.gov.br, informando a quantidade de usuários
-necessários e a justificativa.
+2. Para ter acesso ao ambiente de produção, digite https://smeg.economia.gov.br e pressione Enter.
+Para ter acesso ao ambiente de treinamento, digite https://modulos-hom.plataformamaisbrasil.gov.br e pressione Enter. Atenção! Para navegar no ambiente de treinamento, é necessário a criação de um usuário de demonstração pela Secretaria-Executiva da Rede de Parcerias.
+Para solicitá-lo, envie e-mail para treinamento.transferencias@economia.gov.br, informando a quantidade de usuários necessários e a justificativa.
 3. Aguarde o carregamento da tela inicial, conforme Figura 1.
-4. Clique na opção Entrar com gov.br. Você será direcionado ao site gov.br, onde deverá informar
-as suas credenciais (CPF e senha), conforme Figuras 2 e 3.
-5. Caso não possua cadastro no portal gov.br, você será redirecionado à página de opção de
-criação de uma conta gov.br.
-6. Após a autenticação no portal gov.br, você será redirecionado novamente ao Sistema
-Gestaopublicagov.br.
-7. Caso o usuário não possua cadastro no sistema, será apresentada tela de solicitação de
-cadastro, conforme Figura 5.
-8. Complete o formulário, por meio das opções de seleção. Em Módulo, selecione a opção
-Gestaopublicagov.br e clique em Cadastrar.
-9. A ativação do seu acesso dependerá da aprovação do seu cadastro no sistema. Para saber se
-seu cadastro foi ativado, o usuário deverá entrar novamente no sistema.
+4. Clique na opção Entrar com gov.br. Você será direcionado ao site gov.br, onde deverá informar as suas credenciais (CPF e senha), conforme Figuras 2 e 3.
+5. Caso não possua cadastro no portal gov.br, você será redirecionado à página de opção de criação de uma conta gov.br.
+6. Após a autenticação no portal gov.br, você será redirecionado novamente ao Sistema Gestaopublicagov.br.
+7. Caso o usuário não possua cadastro no sistema, será apresentada tela de solicitação de cadastro, conforme Figura 5.
+8. Complete o formulário, por meio das opções de seleção. Em Módulo, selecione a opção Gestaopublicagov.br e clique em Cadastrar.
+9. A ativação do seu acesso dependerá da aprovação do seu cadastro no sistema. Para saber se seu cadastro foi ativado, o usuário deverá entrar novamente no sistema.
 
 ![Figura 1 – Tela inicial de acesso ao Sistema Gestaopublicagov.br](./images/manual_p4_2_Image89.jpg)  
 *(Figura 1 – Tela inicial de acesso ao Sistema Gestaopublicagov.br)*
@@ -112,23 +85,15 @@ Governança e Gestão (IMGG).
 
 ### 6.1 Menu PÁGINA INICIAL
 
-Ao acessar o módulo do Gestaopublicagov.br, o usuário será direcionado à tela inicial do sistema,
-correspondente ao menu Página Inicial.
-Durante todo o uso do sistema, o usuário visualizará barra lateral à esquerda, com os principais
-menus e a versão do sistema, a instituição principal (CNPJ e nome), na parte superior da tela, e o menu
-superior à direita, com a identificação do usuário.
+Ao acessar o módulo do Gestaopublicagov.br, o usuário será direcionado à tela inicial do sistema, correspondente ao menu Página Inicial.
+Durante todo o uso do sistema, o usuário visualizará barra lateral à esquerda, com os principais menus e a versão do sistema, a instituição principal (CNPJ e nome), na parte superior da tela, e o menu superior à direita, com a identificação do usuário.
 De acordo com o(s) perfil(is) do usuário, serão exibidos menus distintos na barra lateral de menus:
-* Presidente do Comitê de Aplicação: Meus Módulos, Página Inicial, IMGG e Administrativo
-(Figura 8);
+* Presidente do Comitê de Aplicação: Meus Módulos, Página Inicial, IMGG e Administrativo (Figura 8);
 * Membro do Comitê de Aplicação: Meus Módulos, Página Inicial e IMGG (Figura 9);
-* Coordenador da Rede de Parcerias Federal: Meus Módulos, Página Inicial, IMGG e
-Administrativo (Figura 10);
-* Coordenador da Rede de Parcerias Estadual: Meus Módulos, Página Inicial, IMGG e
-Administrativo (Figura 11);
-* Coordenador da Rede de Parcerias Municipal: Meus Módulos, Página Inicial, IMGG e
-Administrativo (Figura 12).
-Nessa tela inicial, também será exibido o Painel de Controle, em que são apresentadas listas de
-instrumentos de acordo com o(s) perfil(is) do usuário e com o âmbito de atuação deste.
+* Coordenador da Rede de Parcerias Federal: Meus Módulos, Página Inicial, IMGG e Administrativo (Figura 10);
+* Coordenador da Rede de Parcerias Estadual: Meus Módulos, Página Inicial, IMGG e Administrativo (Figura 11);
+* Coordenador da Rede de Parcerias Municipal: Meus Módulos, Página Inicial, IMGG e Administrativo (Figura 12).
+Nessa tela inicial, também será exibido o Painel de Controle, em que são apresentadas listas de instrumentos de acordo com o(s) perfil(is) do usuário e com o âmbito de atuação deste.
 
 ![Figura 8 – Presidente do Comitê de Aplicação](./images/manual_p8_9_Image100.png)  
 *(Figura 8 – Presidente do Comitê de Aplicação)*
@@ -139,8 +104,7 @@ instrumentos de acordo com o(s) perfil(is) do usuário e com o âmbito de atuaç
 ![Figura 10 – Coordenador da Rede de Parcerias Federal](./images/manual_p9_11_Image103.png)  
 *(Figura 10 – Coordenador da Rede de Parcerias Federal)*
 
-Em Perfil(s), na parte superior da tela, à direita, conforme Figura 13, o usuário visualizará o(s)
-respectivo(s) perfil(is).
+Em Perfil(s), na parte superior da tela, à direita, conforme Figura 13, o usuário visualizará o(s) respectivo(s) perfil(is).
 
 ![Figura 11 – Coordenador da Rede de Parcerias Estadual](./images/manual_p10_12_Image105.png)  
 *(Figura 11 – Coordenador da Rede de Parcerias Estadual)*
@@ -148,9 +112,7 @@ respectivo(s) perfil(is).
 ![Figura 12 – Coordenador da Rede de Parcerias Municipal](./images/manual_p10_13_Image106.png)  
 *(Figura 12 – Coordenador da Rede de Parcerias Municipal)*
 
-Caso a instituição tenha algum instrumento cadastrado, por meio do ícone de consulta
-, será
-apresentada a tela da Figura 14.
+Caso a instituição tenha algum instrumento cadastrado, por meio do ícone de consulta, será apresentada a tela da Figura 14.
 Ao clicarmos em Meu Cadastro, será apresentada a tela da Figura 15, com os dados do usuário.
 Ao clicarmos em Sair, o usuário sairá do sistema, retornando à tela de acesso.
 
@@ -162,10 +124,8 @@ Ao clicarmos em Sair, o usuário sairá do sistema, retornando à tela de acesso
 
 ### 6.2 Menu IMGG
 
-No menu IMGG, visível por todos os perfis, serão apresentados, de acordo com o perfil do usuário,
-os submenus Aplicação, Monitoramento, Termo de Adesão, FAQ e Glossário:
-* Presidente do Comitê de Aplicação: Aplicação, Monitoramento, Termo de Adesão, FAQ e
-Glossário (Figura 16);
+No menu IMGG, visível por todos os perfis, serão apresentados, de acordo com o perfil do usuário, os submenus Aplicação, Monitoramento, Termo de Adesão, FAQ e Glossário:
+* Presidente do Comitê de Aplicação: Aplicação, Monitoramento, Termo de Adesão, FAQ e Glossário (Figura 16);
 * Membro do Comitê de Aplicação: Aplicação, Monitoramento, FAQ e Glossário (Figura 17);
 * Coordenador da Rede de Parcerias Federal: Aplicação, FAQ e Glossário (Figura 18);
 * Coordenador da Rede de Parcerias Estadual: Aplicação, FAQ e Glossário (Figura 19);
@@ -173,21 +133,9 @@ Glossário (Figura 16);
 
 #### 6.2.1 Submenu Aplicação
 
-Ao clicarmos no submenu Aplicação, será apresentada tela de acompanhamento do(s)
-instrumento(s), de acordo com o âmbito de atuação do usuário (Figuras 16-20), em que serão exibidos
-campos para consulta (Instrumento, Número e Status) das aplicações de instrumentos realizadas.
-Abaixo do campo de consulta, será exibida a lista Aplicação de Instrumentos, que exibirá a relação
-de aplicações de instrumentos realizadas pela instituição do usuário, subdividida pelas colunas
-Instrumento, Número, Ciclo de Avaliação, Status (Em Aplicação, Em Validação ou Certificação),
-Percentual e Ação (com opção de reorganização por filtro). Na coluna Ação, serão apresentadas opções
-de acordo com o perfil do usuário:
-* Presidente do Comitê de Aplicação: visualizar
-, alterar
-ou excluir
-uma aplicação de
-instrumento.
-* Demais perfis: visualizar
-.
+Ao clicarmos no submenu Aplicação, será apresentada tela de acompanhamento do(s) instrumento(s), de acordo com o âmbito de atuação do usuário (Figuras 16-20), em que serão exibidos campos para consulta (Instrumento, Número e Status) das aplicações de instrumentos realizadas. Abaixo do campo de consulta, será exibida a lista Aplicação de Instrumentos, que exibirá a relação de aplicações de instrumentos realizadas pela instituição do usuário, subdividida pelas colunas Instrumento, Número, Ciclo de Avaliação, Status (Em Aplicação, Em Validação ou Certificação), Percentual e Ação (com opção de reorganização por filtro). Na coluna Ação, serão apresentadas opções de acordo com o perfil do usuário:
+* Presidente do Comitê de Aplicação: visualizar, alterar ou excluir uma aplicação de instrumento.
+* Demais perfis: visualizar.
 
 ![Figura 15 – Meu Cadastro](./images/manual_p12_17_Image112.png)  
 *(Figura 15 – Meu Cadastro)*

@@ -16,7 +16,7 @@ Preencha os valores abaixo para referência da equipe de desenvolvimento:
 | **Conta GCP Administradora** | `jaderbrito.fernandes@sefaz.mt.gov.br` | Conta proprietária do projeto GCP |
 | **ID da Extensão no Chrome** | `iobhoockjdkooadefbhlolggdlikdoke` | ID alfanumérico em `chrome://extensions/` |
 | **OAuth Client ID** | `1030154870179-60e6j1amgkpn2apsj5i0nf6lurs58k54.apps.googleusercontent.com` | ID da credencial para o `manifest.json` |
-| **Endpoint do Apps Script Proxy** | `https://script.google.com/macros/s/AKfycbyhb7jguRrdpBdYx335yj7zLXObTm53l0BLL4k3_Q-Ci2x4xP4DeJqQRfWFzlJSn5q_/exec` | URL pública do Web App no Google Apps Script |
+| **Endpoint do Apps Script Proxy** | `https://script.google.com/macros/s/AKfycbxB0r52U-lcIIZQKslhDBaROeVz-aqNmD1j1RrzUzFUDzxGJyZWwmJK8pjaARBc0u3s/exec` | URL pública do Web App no Google Apps Script |
 | **Repositório do Código-Fonte** | `JaderBrito09/extensao_geral` | Repositório exclusivo do código da extensão, Apps Script e testes |
 | **Repositório Exclusivo de Skills** | `JaderBrito09/assistente-jorge-skills` | Repositório dedicado para arquivos Markdown (`.md`) e `skills.json` |
 
