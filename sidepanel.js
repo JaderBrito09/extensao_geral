@@ -938,7 +938,7 @@ function extractPageFilesFromDOM() {
 async function carregarArquivosPagina() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab || !tab.id || tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) {
+    if (!tab || !tab.id || !tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || tab.url.startsWith('about:')) {
       pageFilesPanel.classList.add('hidden');
       return;
     }
