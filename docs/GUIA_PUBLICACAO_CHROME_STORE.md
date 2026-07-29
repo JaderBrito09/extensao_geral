@@ -57,13 +57,42 @@ No menu lateral **Listagem da loja** (Store listing), preencha os campos obrigat
   - Envie uma imagem `128`x`128` px (arquivo `icons/icon128.png`).
 
 ### Passo 5: Práticas de Privacidade (Privacy Practices)
-Na aba **Práticas de privacidade**:
+Na aba **Práticas de privacidade** (Privacy practices) do console, você deve preencher os campos de **Link da Política de Privacidade** e colar as **Justificativas de Permissões** abaixo:
 
-1. **Justificativa de Permissões (Single Purpose)**:
-   - Declare a finalidade principal: *"Fornecer um assistente interativo no painel lateral para leitura e análise contextualizada de páginas e documentos fornecidos pelo usuário."*
-2. **Uso de Dados**:
-   - Marque apenas os dados utilizados localmente (`Histórico da web` ou `Conteúdo da página` para fins exclusivos de processamento do prompt no assistente).
-   - Confirme que os dados **não são vendidos** nem utilizados para fins de publicidade/crédito.
+#### 🔗 Link da Política de Privacidade:
+Cole a URL do raw do arquivo no GitHub (ou link do seu site/repositório):
+`https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/docs/POLITICA_DE_PRIVACIDADE.md`
+
+---
+
+#### 📝 Justificativas de Permissões (Copie e Cole cada texto no campo correspondente):
+
+* **`sidePanel`**:
+  > `Utilizada para exibir a interface de chat do assistente analítico no painel lateral nativo do navegador Chrome, garantindo navegação contínua sem cobrir o conteúdo da página ativa.`
+
+* **`identity`**:
+  > `Utilizada exclusivamente para autenticar o usuário via OAuth 2.0 com a Conta Google e verificar se o e-mail possui autorização ativa na planilha de controle de acesso do sistema.`
+
+* **`scripting`**:
+  > `Utilizada para injetar o script de extração de texto sanitizado e leitura de dados de formulários na aba ativa somente quando o usuário solicita uma análise.`
+
+* **`tabs`**:
+  > `Utilizada para identificar a URL e o título da aba ativa atual que o usuário deseja analisar com o assistente.`
+
+* **`storage`**:
+  > `Utilizada para salvar o histórico de conversas e preferências do assistente localmente no dispositivo do usuário, além de armazenar o cache temporário das habilidades.`
+
+* **`downloads`**:
+  > `Utilizada para realizar o download automático de documentos anexados na página ativa (.pdf, .txt, .csv, .json) para leitura e análise a pedido do usuário.`
+
+* **Permissão de Host (`host_permissions` / `<all_urls>`, `script.google.com`, `github.com`)**:
+  > `Necessária para extrair o texto de páginas web acessadas voluntariamente pelo usuário, comunicar-se com o gateway proxy do servidor no Google Apps Script e baixar o catálogo de habilidades do GitHub.`
+
+---
+
+#### 🔒 Coleta e Uso de Dados (Data Usage):
+* Marque apenas que os dados da página/navegação são processados exclusivamente para a funcionalidade principal da extensão.
+* Marque **NÃO** para todas as perguntas referentes a venda de dados, publicidade ou avaliação de crédito.
 
 ### Passo 6: Submeter para Revisão
 1. Clique no botão **Enviar para análise** (Submit for review) no canto superior direito.
