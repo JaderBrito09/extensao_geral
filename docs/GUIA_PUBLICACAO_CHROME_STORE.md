@@ -60,8 +60,8 @@ No menu lateral **Listagem da loja** (Store listing), preencha os campos obrigat
 Na aba **Práticas de privacidade** (Privacy practices) do console, você deve preencher os campos de **Link da Política de Privacidade** e colar as **Justificativas de Permissões** abaixo:
 
 #### 🔗 Link da Política de Privacidade:
-Cole a URL do raw do arquivo no GitHub (ou link do seu site/repositório):
-`https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/POLITICA_DE_PRIVACIDADE.md`
+Cole a URL do raw do arquivo no GitHub:
+`https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/docs/POLITICA_DE_PRIVACIDADE.md`
 
 ---
 

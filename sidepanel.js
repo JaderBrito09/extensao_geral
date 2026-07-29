@@ -208,7 +208,7 @@ async function buscarSkillNoGithub(skillKey) {
   }
 
   try {
-    let url = `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/skills/${skillKey}.md`;
+    let url = `https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/skills-repo/skills/${skillKey}/SKILL.md`;
     let resp = await fetch(url);
     if (!resp.ok) {
       url = `https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/skills-repo/skills/${skillKey}.md`;
@@ -289,8 +289,8 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
     if (cached_skills && skills_cache_timestamp && (now - skills_cache_timestamp < SKILLS_CACHE_TTL_MS)) {
       skillsConfig = { ...skillsConfig, ...cached_skills };
     } else {
-      // 1. Tentar ler o catálogo skills.json no repositório exclusivo de skills
-      let catalogUrl = "https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/skills.json";
+      // 1. Tentar ler o catálogo skills.json no repositório principal extensao_geral
+      let catalogUrl = "https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/skills-repo/skills.json";
       let catResp = await fetch(catalogUrl);
 
       if (!catResp.ok) {
@@ -308,7 +308,7 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
         if (catalogData && catalogData.skills && Array.isArray(catalogData.skills)) {
           for (const item of catalogData.skills) {
             const skillId = item.id || item.slug || item.file.replace(/^.*[\\\/]/, '').replace('.md', '');
-            const rawMdUrl = `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/${item.file}`;
+            const rawMdUrl = `https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/skills-repo/${item.file}`;
             let mdResp = await fetch(rawMdUrl);
 
             if (!mdResp.ok) {
