@@ -545,76 +545,17 @@ organizações, e efeitos que surgirão em longo prazo, caso o problema não sej
 ➢ Tendência: potencial de crescimento do problema, avaliação da tendência de crescimento,
 redução ou desaparecimento do problema.
 Essas características são analisadas e pontuadas conforme demonstrado a seguir:
-Tabela de Priorização - GUT
-pontos
-Gravidade
-(Consequências se nada
-for feito)
-Urgência
-(Prazo para tomada de
-decisão)
-Tendência
-(Proporção do problema no futuro)
-5
-Os
-prejuízos
-ou
-dificuldades
-são
-extremamente graves.
-É necessária uma ação
-imediata.
-Se nada for feito, o agravamento da
-situação
-ou
-problema
-será
-imediato.
-4
-Os
-prejuízos
-ou
-dificuldades são muito
-graves.
-É necessária uma ação
-com alguma urgência.
-Se nada for feito, vai piorar a
-situação ou problema em curto
-prazo.
-3
-Os
-prejuízos
-ou
-dificuldades são graves.
-É necessária uma ação o
-mais rápido possível.
-Se nada for feito, haverá um
-agravamento da situação ou do
-problema em médio prazo.
-2
-Os
-prejuízos
-ou
-dificuldades são pouco
-graves.
-Pode esperar um pouco
-para agir.
-Se nada for feito, vai piorar a
-situação ou o problema em longo
-prazo.
-1
-Os
-prejuízos
-ou
-dificuldades
-não
-são
-graves.
-Não há pressa para agir.
-Se nada for feito, não haverá
-agravamento, e a situação pode até
-melhorar ou o problema ser
-solucionado.
+
+### Tabela de Priorização - GUT
+
+| Pontos | Gravidade (Consequências se nada for feito) | Urgência (Prazo para tomada de decisão) | Tendência (Proporção do problema no futuro) |
+| :---: | :--- | :--- | :--- |
+| **5** | Os prejuízos ou dificuldades são extremamente graves. | É necessária uma ação imediata. | Se nada for feito, o agravamento da situação ou problema será imediato. |
+| **4** | Os prejuízos ou dificuldades são muito graves. | É necessária uma ação com alguma urgência. | Se nada for feito, vai piorar a situação ou problema em curto prazo. |
+| **3** | Os prejuízos ou dificuldades são graves. | É necessária uma ação o mais rápido possível. | Se nada for feito, haverá um agravamento da situação ou do problema em médio prazo. |
+| **2** | Os prejuízos ou dificuldades são pouco graves. | Pode esperar um pouco para agir. | Se nada for feito, vai piorar a situação ou o problema em longo prazo. |
+| **1** | Os prejuízos ou dificuldades não são graves. | Não há pressa para agir. | Se nada for feito, não haverá agravamento, e a situação pode até melhorar ou o problema ser solucionado. |
+
 É importante observar que a ordem de priorização não determina, necessariamente, quais OMs
 serão transformadas em metas nos Planos. Deve-se estabelecer um ponto de corte, cuidando para
 não se priorizar muitas OMs. É bom lembrar que a organização tem suas metas finalísticas e precisa
@@ -1727,56 +1668,14 @@ no âmbito do recurso será definitiva, não sendo cabível nova impugnação.
 
 ## ANEXO I - Tabela Faixas de Pontuação Geral
 
-INSTRUMENTO DE MATURIDADE DA GOVERNANÇA E DA GESTÃO
-IMGG 100 pontos
-CATEGORIA
-PONTUAÇÃO
-ESTÁGIO DA ORGANIZAÇÃO
-Bronze 4
-75 a 100
-Excelente! A priorização, sistematização e implementação das
-ações de melhoria da gestão e dos processos gerenciais
-estabeleceram as bases para a consolidação de uma cultura de
-elevado nível de maturidade em governança e gestão em sua
-organização. Os resultados apresentados refletem uma
-elevação da satisfação com a prestação dos serviços, em
-decorrência do atendimento das necessidades e expectativas
-das partes interessadas. Lembre-se que "sucesso de hoje não
-garante o sucesso de amanhã".
-Bronze 3
-50 a 74,99
-Muito
-Bom!
-Em
-decorrência
-da
-continuidade
-na
-implementação das ações de aprimoramento, sua organização
-apresenta muitas melhorias na gestão e na prestação dos
-serviços. Surgem muitos resultados de satisfação das partes
-interessadas. Foque nas ações de aprimoramento dos
-processos de relacionamento e atendimento das necessidades
-e expectativas das partes interessadas.  Pergunte-se sempre:
-qual o valor público que estamos entregando?
-Declaração
-de aplicação
-do IMGG 100
-PONTOS.
-25 a 49,99
-Parabéns! Sua organização já apresenta algumas melhorias na
-sua gestão e na prestação dos serviços. Surgem alguns
-resultados decorrentes da priorização e adoção de algumas
-boas práticas de gestão. Agora é buscar maior continuidade na
-implementação das ações. Lembre-se que a regularidade de
-sua ação é o que levará a organização a novas conquistas.
-0 a 24,99
-Ok! Sua organização já deu os primeiros passos visando a
-melhoria de sua gestão. Com a implementação dos planos de
-melhoria priorizados, logo surgirão melhores resultados na
-gestão e no desempenho dos processos gerenciais. Tenha em
-mente que a persistência é fundamental para o sucesso da
-organização na prestação dos serviços públicos.
+### INSTRUMENTO DE MATURIDADE DA GOVERNANÇA E DA GESTÃO (IMGG 100 PONTOS)
+
+| Categoria | Pontuação | Estágio da Organização |
+| :--- | :---: | :--- |
+| **Bronze 4** | 75 a 100 | **Excelente!** A priorização, sistematização e implementação das ações de melhoria da gestão e dos processos gerenciais estabeleceram as bases para a consolidação de uma cultura de elevado nível de maturidade em governança e gestão em sua organização. Os resultados apresentados refletem uma elevação da satisfação com a prestação dos serviços, em decorrência do atendimento das necessidades e expectativas das partes interessadas. Lembre-se que "sucesso de hoje não garante o sucesso de amanhã". |
+| **Bronze 3** | 50 a 74,99 | **Muito Bom!** Em decorrência da continuidade na implementação das ações de aprimoramento, sua organização apresenta muitas melhorias na gestão e na prestação dos serviços. Surgem muitos resultados de satisfação das partes interessadas. Foque nas ações de aprimoramento dos processos de relacionamento e atendimento das necessidades e expectativas das partes interessadas. Pergunte-se sempre: qual o valor público que estamos entregando? |
+| **Bronze 2** | 25 a 49,99 | **Parabéns!** Sua organização já apresenta algumas melhorias na sua gestão e na prestação dos serviços. Surgem alguns resultados decorrentes da priorização e adoção de algumas boas práticas de gestão. Agora é buscar maior continuidade na implementação das ações. Lembre-se que a regularidade de sua ação é o que levará a organização a novas conquistas. |
+| **Bronze 1** | 0 a 24,99 | **Ok!** Sua organização já deu os primeiros passos visando a melhoria de sua gestão. Com a implementação dos planos de melhoria priorizados, logo surgirão melhores resultados na gestão e no desempenho dos processos gerenciais. Tenha em mente que a persistência é fundamental para o sucesso da organização na prestação dos serviços públicos. |
 
 ## ANEXO II – Exemplos de Evidências IMGG 100 PONTOS
 
