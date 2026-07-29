@@ -283,76 +283,77 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
   if (typeof chrome === 'undefined' || !chrome.storage) return;
 
   try {
-    // Forçar atualização remota do catálogo skills.json para aplicar novos nomes amigáveis
+    const now = Date.now();
+
+    // 1. Tentar ler o catálogo skills.json no repositório principal extensao_geral
     let catalogUrl = "https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/skills-repo/skills.json";
     let catResp = await fetch(catalogUrl);
 
-      if (!catResp.ok) {
-        // Fallback local do manifesto skills.json
-        catalogUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
-          ? chrome.runtime.getURL('skills-repo/skills.json') 
-          : './skills-repo/skills.json';
-        catResp = await fetch(catalogUrl);
-      }
+    if (!catResp.ok) {
+      // Fallback local do manifesto skills.json
+      catalogUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
+        ? chrome.runtime.getURL('skills-repo/skills.json') 
+        : './skills-repo/skills.json';
+      catResp = await fetch(catalogUrl);
+    }
 
-      if (catResp.ok) {
-        const catalogData = await catResp.json();
-        const downloadedSkills = {};
+    if (catResp.ok) {
+      const catalogData = await catResp.json();
+      const downloadedSkills = {};
 
-        if (catalogData && catalogData.skills && Array.isArray(catalogData.skills)) {
-          for (const item of catalogData.skills) {
-            const skillId = item.id || item.slug || item.file.replace(/^.*[\\\/]/, '').replace('.md', '');
-            const rawMdUrl = `https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/skills-repo/${item.file}`;
-            let mdResp = await fetch(rawMdUrl);
+      if (catalogData && catalogData.skills && Array.isArray(catalogData.skills)) {
+        for (const item of catalogData.skills) {
+          const skillId = item.id || item.slug || item.file.replace(/^.*[\\\/]/, '').replace('.md', '');
+          const rawMdUrl = `https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/skills-repo/${item.file}`;
+          let mdResp = await fetch(rawMdUrl);
 
-            if (!mdResp.ok) {
-              const localPath = 'skills-repo/' + item.file;
-              const localMdUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
-                ? chrome.runtime.getURL(localPath) 
-                : './' + localPath;
-              mdResp = await fetch(localMdUrl);
-            }
-
-            if (mdResp.ok) {
-              const mdText = await mdResp.text();
-              const parsed = parseSkillMarkdown(mdText, skillId);
-              parsed.id = skillId;
-              parsed.slug = item.slug || skillId;
-              parsed.label = item.name || parsed.label || skillId;
-              parsed.category = item.category || parsed.category || "Geral";
-              downloadedSkills[skillId] = parsed;
-            }
+          if (!mdResp.ok) {
+            const localPath = 'skills-repo/' + item.file;
+            const localMdUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
+              ? chrome.runtime.getURL(localPath) 
+              : './' + localPath;
+            mdResp = await fetch(localMdUrl);
           }
-        }
 
-        if (Object.keys(downloadedSkills).length > 0) {
-          skillsConfig = { ...skillsConfig, ...downloadedSkills };
-          await chrome.storage.local.set({
-            cached_skills: downloadedSkills,
-            skills_cache_timestamp: now
-          });
+          if (mdResp.ok) {
+            const mdText = await mdResp.text();
+            const parsed = parseSkillMarkdown(mdText, skillId);
+            parsed.id = skillId;
+            parsed.slug = item.slug || skillId;
+            parsed.label = item.name || parsed.label || skillId;
+            parsed.category = item.category || parsed.category || "Geral";
+            downloadedSkills[skillId] = parsed;
+          }
         }
       }
 
-      // Se nenhuma skill foi baixada, carrega a skill Markdown local (skills-repo/skills/geral/SKILL.md)
-      if (Object.keys(skillsConfig).length === 0) {
-        try {
-          const localUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
-            ? chrome.runtime.getURL('skills-repo/skills/geral/SKILL.md') 
-            : './skills-repo/skills/geral/SKILL.md';
-          const localResp = await fetch(localUrl);
-          if (localResp.ok) {
-            const mdText = await localResp.text();
-            const parsed = parseSkillMarkdown(mdText, 'SKILL-GERAL-001');
-            parsed.id = 'SKILL-GERAL-001';
-            parsed.slug = 'geral';
-            parsed.category = 'Geral';
-            skillsConfig['SKILL-GERAL-001'] = parsed;
-            skillsConfig['geral'] = parsed;
-          }
-        } catch (e) {
-          console.warn("Aviso na leitura local de skills-repo/skills/geral/SKILL.md:", e);
+      if (Object.keys(downloadedSkills).length > 0) {
+        skillsConfig = { ...skillsConfig, ...downloadedSkills };
+        await chrome.storage.local.set({
+          cached_skills: downloadedSkills,
+          skills_cache_timestamp: now
+        });
+      }
+    }
+
+    // Se nenhuma skill foi baixada, carrega a skill Markdown local (skills-repo/skills/geral/SKILL.md)
+    if (Object.keys(skillsConfig).length === 0) {
+      try {
+        const localUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
+          ? chrome.runtime.getURL('skills-repo/skills/geral/SKILL.md') 
+          : './skills-repo/skills/geral/SKILL.md';
+        const localResp = await fetch(localUrl);
+        if (localResp.ok) {
+          const mdText = await localResp.text();
+          const parsed = parseSkillMarkdown(mdText, 'SKILL-GERAL-001');
+          parsed.id = 'SKILL-GERAL-001';
+          parsed.slug = 'geral';
+          parsed.category = 'Geral';
+          skillsConfig['SKILL-GERAL-001'] = parsed;
+          skillsConfig['geral'] = parsed;
         }
+      } catch (e) {
+        console.warn("Aviso na leitura local de skills-repo/skills/geral/SKILL.md:", e);
       }
     }
   } catch (err) {
