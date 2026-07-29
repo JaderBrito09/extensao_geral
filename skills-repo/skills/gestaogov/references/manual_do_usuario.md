@@ -27,9 +27,7 @@ treinamento. Para acessar a tela inicial do sistema, o usuário deverá digitar 
 navegador de internet desejado. Recomenda-se a utilização dos navegadores Google Chrome ou
 Firefox, nas suas últimas versões disponíveis.
 
-## 4. PRIMEIROS PASSOS PARA UTILIZAÇÃO DO SISTEMA DO MODELO DE GOVERNANÇA E
-
-GESTÃO PÚBLICA
+## 4. PRIMEIROS PASSOS PARA UTILIZAÇÃO DO SISTEMA DO MODELO DE GOVERNANÇA E GESTÃO PÚBLICA
 
 ### 4.1 Autenticando-se no sistema
 
