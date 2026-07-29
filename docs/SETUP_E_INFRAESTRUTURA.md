@@ -100,9 +100,10 @@ O Proxy no Google Apps Script faz a ponte segura entre a extensão Chrome e a AP
 
 1. **Configurar a Planilha**: Crie a planilha com a aba `Usuarios` conforme a seção acima.
 2. **Criar o Google Cloud Project & OAuth 2.0**:
-   - Acesse o Google Cloud Console, crie o projeto `ext-geral-oauth-2026`.
+   - Acesse o Google Cloud Console (`ext-geral-oauth-2026`).
    - Ative a **Google Sheets API**.
-   - Configure a Tela de Permissão OAuth e crie a Credencial do tipo **Extensão do Chrome** informando o ID de 32 letras da extensão.
+   - Na **Tela de Permissão OAuth** (OAuth consent screen), altere o status de publicação clicando em **Publicar aplicativo** (Publish App) para definir o status como `Em Produção`.
+   - Crie a Credencial OAuth do tipo **Extensão do Chrome** e configure o ID oficial da extensão (`hjgeabliemiejipphdibnclofjiifnna`).
 3. **Instalar a Extensão no Chrome**:
    - Acesse `chrome://extensions/`.
    - Ative o *Modo do desenvolvedor* no canto superior direito.
