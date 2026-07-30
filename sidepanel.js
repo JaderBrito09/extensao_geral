@@ -340,24 +340,35 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
       }
     }
 
-    // Se nenhuma skill foi baixada, carrega a skill Markdown local (skills-repo/skills/geral/SKILL.md)
+    // Se nenhuma skill foi baixada remotamente, lê o catálogo local skills.json
     if (Object.keys(skillsConfig).length === 0) {
       try {
-        const localUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
-          ? chrome.runtime.getURL('skills-repo/skills/geral/SKILL.md') 
-          : './skills-repo/skills/geral/SKILL.md';
-        const localResp = await fetch(localUrl);
-        if (localResp.ok) {
-          const mdText = await localResp.text();
-          const parsed = parseSkillMarkdown(mdText, 'SKILL-GERAL-001');
-          parsed.id = 'SKILL-GERAL-001';
-          parsed.slug = 'geral';
-          parsed.category = 'Geral';
-          skillsConfig['SKILL-GERAL-001'] = parsed;
-          skillsConfig['geral'] = parsed;
+        const catalogLocalUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
+          ? chrome.runtime.getURL('skills-repo/skills.json') 
+          : './skills-repo/skills.json';
+        const catalogResp = await fetch(catalogLocalUrl);
+        if (catalogResp.ok) {
+          const catalogLocalData = await catalogResp.json();
+          if (catalogLocalData && catalogLocalData.skills && catalogLocalData.skills.length > 0) {
+            const firstItem = catalogLocalData.skills[0];
+            const localSkillUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
+              ? chrome.runtime.getURL('skills-repo/' + firstItem.file) 
+              : './skills-repo/' + firstItem.file;
+            const localResp = await fetch(localSkillUrl);
+            if (localResp.ok) {
+              const mdText = await localResp.text();
+              const skillId = firstItem.id || firstItem.slug;
+              const parsed = parseSkillMarkdown(mdText, skillId);
+              parsed.id = skillId;
+              parsed.slug = firstItem.slug || skillId;
+              parsed.label = firstItem.name || parsed.label || skillId;
+              parsed.category = firstItem.category || parsed.category || "Geral";
+              skillsConfig[skillId] = parsed;
+            }
+          }
         }
       } catch (e) {
-        console.warn("Aviso na leitura local de skills-repo/skills/geral/SKILL.md:", e);
+        console.warn("Aviso na leitura do manifesto local de fallback:", e);
       }
     }
   } catch (err) {
@@ -491,16 +502,16 @@ async function validarUsuarioNaPlanilha(email) {
       return { authorized: false, message: "Erro na validação: " + data.error };
     }
 
-    // Normaliza a lista de skills permitidas retornada pelo backend
-    const allowedSkills = Array.isArray(data.allowed_skills) && data.allowed_skills.length > 0
+    // Retorna a lista exata de skills enviada pela planilha do Apps Script
+    const allowedSkills = Array.isArray(data.allowed_skills)
       ? data.allowed_skills.map(s => s.trim().toUpperCase()).filter(Boolean)
-      : ["SKILL-GERAL-001"];
+      : [];
 
     return { authorized: true, allowed_skills: allowedSkills };
   } catch (err) {
     console.warn("Aviso na validação de permissão:", err);
-    // Em modo offline/dev fallback libera apenas a skill geral por padrão
-    return { authorized: true, allowed_skills: ["SKILL-GERAL-001"] };
+    // Em caso de falha de conexão, retorna lista vazia para forçar nova tentativa sem assumir IDs fixos no código
+    return { authorized: true, allowed_skills: [] };
   }
 }
 
