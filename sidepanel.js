@@ -390,27 +390,21 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
         console.warn("Aviso na leitura do manifesto local de fallback:", e);
       }
     }
-  } catch (err) {
-    console.warn("Aviso: Carregamento dinâmico de skills usou o conjunto local de fallback.", err);
   }
 
-  popularSelectSkills(allowedSkills);
+  exibirCardSelecaoHabilidadeNoChat(allowedSkills);
 }
 
 /**
- * Popula o <select> filtrando as skills pelo ID exato (ex: "SKILL-GERAL-001") ou "ALL" / "*".
- * Valores separados por vírgula na planilha são aceitos (ex: "SKILL-GERAL-001, SKILL-GESTAOGOV-001").
- * Match por slug ou categoria não é suportado nesta versão.
+ * Exibe no chat o card interativo com a lista de Habilidades permitidas para o usuário
  */
-function popularSelectSkills(allowedSkills = ["ALL"]) {
-  if (!selectEl) return;
-  const currentVal = selectEl.value;
-  selectEl.innerHTML = '<option value="" disabled selected>💡 Selecione uma Habilidade...</option>';
+function exibirCardSelecaoHabilidadeNoChat(allowedSkills = ["ALL"]) {
+  if (!historyEl) return;
 
   const normalizedAllowed = allowedSkills.map(s => s.trim().toUpperCase());
   const isAllAllowed = normalizedAllowed.includes("ALL") || normalizedAllowed.includes("*");
 
-  // Rastreia IDs já adicionados para evitar duplicatas
+  const options = [];
   const addedIds = new Set();
 
   for (const [key, skill] of Object.entries(skillsConfig)) {
@@ -418,7 +412,6 @@ function popularSelectSkills(allowedSkills = ["ALL"]) {
     const skillSlugUpper = (skill.slug || key).toUpperCase();
     const skillCatUpper = (skill.category || "").toUpperCase();
 
-    // Só exibe a skill se for ALL/* ou se o ID, Slug ou Categoria estiver na lista de permissões da planilha
     const hasPermission = isAllAllowed || 
       normalizedAllowed.includes(skillIdUpper) || 
       normalizedAllowed.includes(skillSlugUpper) ||
@@ -426,19 +419,90 @@ function popularSelectSkills(allowedSkills = ["ALL"]) {
 
     if (hasPermission && !addedIds.has(skillIdUpper)) {
       addedIds.add(skillIdUpper);
-      const option = document.createElement('option');
-      option.value = key;
-      option.textContent = skill.label;
-      selectEl.appendChild(option);
+      options.push({
+        label: skill.label,
+        value: key,
+        skillKey: key
+      });
     }
   }
 
-  if (currentVal && skillsConfig[currentVal]) {
-    selectEl.value = currentVal;
-  } else if (selectEl.options.length === 2) {
-    // Se só houver 1 opção permitida (excluindo a opção default disabled), seleciona-a automaticamente
-    selectEl.selectedIndex = 1;
-    exibirOrientacaoSkillSelecionada();
+  if (options.length === 0) return;
+
+  // Monta a mensagem do card interativo
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'message ai-msg';
+
+  const promptData = {
+    type: 'interactive_prompt',
+    title: 'Por favor, selecione uma habilidade:',
+    options: options
+  };
+
+  renderizarCardSelecaoSkill(msgDiv, promptData);
+  historyEl.appendChild(msgDiv);
+  historyEl.scrollTop = historyEl.scrollHeight;
+}
+
+/**
+ * Renderiza o card de seleção de skill no chat e vincula o evento de clique (Item 4 do fluxo)
+ */
+function renderizarCardSelecaoSkill(containerEl, dadosPrompt) {
+  const cardDiv = document.createElement('div');
+  cardDiv.className = 'interactive-option-card';
+
+  if (dadosPrompt.title) {
+    const titleEl = document.createElement('div');
+    titleEl.className = 'interactive-title';
+    titleEl.textContent = dadosPrompt.title;
+    cardDiv.appendChild(titleEl);
+  }
+
+  const optionsGroup = document.createElement('div');
+  optionsGroup.className = 'interactive-options-group';
+
+  dadosPrompt.options.forEach((opcao) => {
+    const btn = document.createElement('button');
+    btn.className = 'interactive-option-btn';
+
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'option-label';
+    labelSpan.textContent = opcao.label;
+    btn.appendChild(labelSpan);
+
+    btn.addEventListener('click', async () => {
+      // Desabilita os botões do card
+      optionsGroup.querySelectorAll('.interactive-option-btn').forEach(b => {
+        b.disabled = true;
+        b.classList.add('disabled');
+      });
+      btn.classList.add('selected');
+
+      // 4. Seleciona a Habilidade ativa, busca no GitHub e exibe a orientação inicial (Item 4)
+      await ativarHabilidadeSelecionada(opcao.skillKey);
+    });
+
+    optionsGroup.appendChild(btn);
+  });
+
+  cardDiv.appendChild(optionsGroup);
+  containerEl.appendChild(cardDiv);
+}
+
+// Armazena a chave da habilidade atualmente ativa no chat
+let activeSkillKey = null;
+
+/**
+ * Executa o Item 4: Busca a skill no GitHub, define como ativa e imprime a orientação inicial
+ */
+async function ativarHabilidadeSelecionada(skillKey) {
+  activeSkillKey = skillKey;
+
+  const skill = await buscarSkillNoGithub(skillKey);
+  if (skill && skill.userGuidance) {
+    appendMessageUI(`💡 **Habilidade Selecionada: ${skill.label}**\n\n${skill.userGuidance}`, 'ai-msg', false);
+  } else if (skill) {
+    appendMessageUI(`💡 **Habilidade Selecionada: ${skill.label}**\n\nHabilidade pronta para uso. Envie sua pergunta ou anexos.`, 'ai-msg', false);
   }
 }
 
@@ -1540,12 +1604,12 @@ function setUiBusy(busy) {
 // Main Processing Workflow
 async function processarRequisicao() {
   const userInput = userInputEl.value.trim();
-  const selectedSkillKey = selectEl.value;
+  const selectedSkillKey = activeSkillKey || (selectEl ? selectEl.value : null);
 
   if (!userInput && attachedFiles.length === 0) return;
 
   if (!selectedSkillKey) {
-    appendMessageUI('⚠️ **Por favor, selecione uma Habilidade no topo antes de enviar a pergunta.**', 'ai-msg', false);
+    appendMessageUI('⚠️ **Por favor, selecione uma habilidade clicando em uma das opções acimas antes de enviar a pergunta.**', 'ai-msg', false);
     return;
   }
 
