@@ -826,13 +826,9 @@ function exibirTelaAcessoNegado(email, reason = null) {
 async function iniciarNovaConversa(shouldNotify = true) {
   attachedFiles = [];
   renderAttachedFilesUI();
+  activeSkillKey = null;
   activeChatId = 'chat-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
-  historyEl.innerHTML = `
-    <div class="message ai-msg">
-      <strong>Olá! 👋 (Nova Conversa)</strong><br>
-      Selecione uma Habilidade, abra qualquer site e me envie uma pergunta. Vou analisar o conteúdo completo da sua aba ativa.
-    </div>
-  `;
+  historyEl.innerHTML = '';
 
   const newSession = {
     id: activeChatId,
@@ -846,7 +842,7 @@ async function iniciarNovaConversa(shouldNotify = true) {
   await chrome.storage.local.set({ chat_sessions, active_chat_id: activeChatId });
 
   if (currentUser && currentUser.allowed_skills) {
-    popularSelectSkills(currentUser.allowed_skills);
+    exibirCardSelecaoHabilidadeNoChat(currentUser.allowed_skills);
   }
 
   if (historyDrawer) historyDrawer.classList.add('hidden');
@@ -856,12 +852,9 @@ async function iniciarNovaConversa(shouldNotify = true) {
 function carregarMensagensDaSessao(session) {
   historyEl.innerHTML = '';
   if (!session.messages || session.messages.length === 0) {
-    historyEl.innerHTML = `
-      <div class="message ai-msg">
-        <strong>Olá! 👋</strong><br>
-        Selecione uma Habilidade, abra qualquer site e me envie uma pergunta. Vou analisar o conteúdo completo da sua aba ativa.
-      </div>
-    `;
+    if (currentUser && currentUser.allowed_skills) {
+      exibirCardSelecaoHabilidadeNoChat(currentUser.allowed_skills);
+    }
   } else {
     session.messages.forEach(msg => {
       appendMessageUI(msg.text, msg.type, false);
