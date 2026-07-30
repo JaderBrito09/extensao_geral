@@ -542,7 +542,6 @@ async function verificarStatusAuth() {
     const data = await chrome.storage.session.get(['user_profile']);
     if (data.user_profile && data.user_profile.email) {
       currentUser = data.user_profile;
-      exibirPerfilLogado(currentUser);
       
       // Revalida a planilha para garantir o filtro atualizado de skills permitidas
       const validation = await validarUsuarioNaPlanilha(currentUser.email);
@@ -550,6 +549,8 @@ async function verificarStatusAuth() {
         currentUser.allowed_skills = validation.allowed_skills || ["ALL"];
         await carregarSkillsDinamicas(currentUser.allowed_skills);
       }
+      
+      exibirPerfilLogado(currentUser);
       return;
     }
 
@@ -634,9 +635,10 @@ async function realizarLoginSilencioso() {
 
           profile.token = token;
           currentUser = profile;
-          await chrome.storage.session.set({ user_profile: profile });
-          exibirPerfilLogado(profile);
-          await carregarSkillsDinamicas(validation.allowed_skills || ["ALL"]);
+          currentUser.allowed_skills = validation.allowed_skills || ["ALL"];
+          await chrome.storage.session.set({ user_profile: currentUser });
+          await carregarSkillsDinamicas(currentUser.allowed_skills);
+          exibirPerfilLogado(currentUser);
           resolve(true);
         } catch (err) {
           resolve(false);
@@ -733,10 +735,11 @@ async function realizarLoginGoogle(interactive = true) {
 
       profile.token = token;
       currentUser = profile;
+      currentUser.allowed_skills = validation.allowed_skills || ["ALL"];
 
-      await chrome.storage.session.set({ user_profile: profile });
-      exibirPerfilLogado(profile);
-      await carregarSkillsDinamicas(validation.allowed_skills || ["ALL"]);
+      await chrome.storage.session.set({ user_profile: currentUser });
+      await carregarSkillsDinamicas(currentUser.allowed_skills);
+      exibirPerfilLogado(currentUser);
     } else {
       if (interactive) exibirTelaLogin();
     }
