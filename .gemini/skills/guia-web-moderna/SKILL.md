@@ -1,5 +1,5 @@
 ---
-name: modern-web-guidance
+name: guia-web-moderna
 description: Guia de busca e auditoria de boas práticas para desenvolvimento web moderno (HTML, CSS e JavaScript client-side). Utilizar obrigatoriamente antes de criar novos componentes ou implementar recursos de interface na extensão.
 ---
 

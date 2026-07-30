@@ -1,5 +1,5 @@
 ---
-name: memory-leak-debugging
+name: depuracao-vazamento-memoria
 description: Diagnostica e resolve vazamentos de memória (memory leaks) em aplicações JavaScript e extensões Chrome (Side Panel, Content Scripts e Service Worker). Utilizar quando houver alto uso de memória, travamentos ou na análise de heapsnapshots.
 ---
 

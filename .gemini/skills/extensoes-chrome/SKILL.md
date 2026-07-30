@@ -1,5 +1,5 @@
 ---
-name: chrome-extensions
+name: extensoes-chrome
 description: Diretrizes de desenvolvimento, arquitetura, auditoria e publicação de extensões Chrome em Manifest V3 para o projeto Assistente do Jorge. Ativar sempre que modificar manifest.json, background.js, sidepanel.*, popup.* ou ao preparar builds para a Chrome Web Store.
 ---
 

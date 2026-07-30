@@ -24,12 +24,12 @@ Quando a skill **`versao-e-backup`** é executada, ela orquestra o ecossistema c
 ```mermaid
 flowchart TD
     A[Início: versao-e-backup] --> B[Pergunta Interativa SemVer]
-    B --> C[Aciona test-automation-and-qa]
+    B --> C[Aciona automacao-testes-e-qa]
     C --> D{Testes Passaram?}
     D -- Não --> E[Abortar Operação]
     D -- Sim --> F[Aciona depuracao e a11y]
     F --> G[Atualiza manifest.json e README.md]
-    G --> H[Aciona documentation-and-changelog]
+    G --> H[Aciona documentacao-e-historico]
     H --> I[Gera Pacote .zip de Release]
     I --> J[Aciona gerenciamento-repositorios]
     J --> K[Commit, Tag vX.Y.Z e Push no GitHub]
@@ -50,11 +50,11 @@ Se o tipo de incremento (`patch`, `minor` ou `major`) não for informado na cham
 
 ---
 
-### Passo 1: Validação de Qualidade (Chama `test-automation-and-qa`)
+### Passo 1: Validação de Qualidade (Chama `automacao-testes-e-qa`)
 - Acionar a skill de QA para rodar os testes unitários (`node tests/test.js`).
 - *Se algum teste falhar, abortar imediatamente a geração da versão.*
 
-### Passo 2: Auditoria de Acessibilidade & Código (Chama `depuracao` & `chrome-extensions`)
+### Passo 2: Auditoria de Acessibilidade & Código (Chama `depuracao` & `extensoes-chrome`)
 - Garantir que nenhum atributo ARIA ou regra de Manifest V3 tenha sido quebrado.
 
 ### Passo 3: Atualizar Números de Versão
@@ -62,7 +62,7 @@ Se o tipo de incremento (`patch`, `minor` ou `major`) não for informado na cham
 - Incrementar a propriedade `"version"` conforme o tipo escolhido (`patch`, `minor` ou `major`).
 - Atualizar a referência de comando no [`README.md`](file:///Users/jader/Meu%20Drive/extensao_geral/README.md).
 
-### Passo 4: Atualizar Documentação (Chama `documentation-and-changelog`)
+### Passo 4: Atualizar Documentação (Chama `documentacao-e-historico`)
 - Atualizar links relativos e notas de versão.
 
 ### Passo 5: Gerar o Pacote `.zip` de Produção (Backup Físico)

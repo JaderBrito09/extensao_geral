@@ -1,5 +1,5 @@
 ---
-name: documentation-and-changelog
+name: documentacao-e-historico
 description: Gerencia e atualiza a documentação técnica (docs/), o histórico de alterações (CHANGELOG.md), as User Stories e o README do projeto Assistente Jorge.
 ---
 

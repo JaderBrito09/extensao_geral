@@ -1,5 +1,5 @@
 ---
-name: test-automation-and-qa
+name: automacao-testes-e-qa
 description: Orienta e executa a suíte de testes de regressão automatizados (Node.js) do projeto Assistente Jorge. Deve ser acionada antes de commits ou lançamentos de versão.
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: apps-script-gateway
+name: servidor-proxy-apps-script
 description: Orienta o desenvolvimento, depuração, segurança e deploy do servidor Proxy Gateway no Google Apps Script (Code.gs) e integração com Google Sheets e Gemini API.
 ---
 
