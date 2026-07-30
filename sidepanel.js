@@ -175,28 +175,35 @@ if (typeof chrome !== 'undefined' && chrome.tabs) {
 // Listener para exibição de orientação ao alterar a Habilidade selecionada
 if (selectEl) {
   selectEl.addEventListener('change', async () => {
-    // Atualiza o estado habilitado/desabilitado dos botões de download da página
-    renderPageFilesUI();
-
-    const selectedKey = selectEl.value;
-    if (!selectedKey) {
-      appendMessageUI('⚠️ **Nenhuma Habilidade selecionada.**\nPor favor, selecione uma Habilidade no menu superior para orientar a análise do assistente.', 'ai-msg', false);
-      return;
-    }
-
-    // Se o histórico contiver apenas a mensagem de boas-vindas inicial, limpa para retirar a mensagem de boas-vindas
-    const welcomeMsg = historyEl.querySelector('.message.ai-msg');
-    if (welcomeMsg && historyEl.children.length === 1 && welcomeMsg.innerHTML.includes('Selecione uma Habilidade')) {
-      historyEl.innerHTML = '';
-    }
-
-    const skill = await buscarSkillNoGithub(selectedKey);
-    if (skill && skill.userGuidance) {
-      appendMessageUI(`💡 **Habilidade Selecionada: ${skill.label}**\n\n${skill.userGuidance}`, 'ai-msg', false);
-    } else if (skill) {
-      appendMessageUI(`💡 **Habilidade Selecionada: ${skill.label}**\n\nHabilidade pronta para uso. Envie sua pergunta ou anexos.`, 'ai-msg', false);
-    }
+    await exibirOrientacaoSkillSelecionada();
   });
+}
+
+/**
+ * Exibe a orientação inicial (User Guidance) no chat para a skill selecionada no dropdown
+ */
+async function exibirOrientacaoSkillSelecionada() {
+  if (!selectEl) return;
+  renderPageFilesUI();
+
+  const selectedKey = selectEl.value;
+  if (!selectedKey) {
+    appendMessageUI('⚠️ **Nenhuma Habilidade selecionada.**\nPor favor, selecione uma Habilidade no menu superior para orientar a análise do assistente.', 'ai-msg', false);
+    return;
+  }
+
+  // Se o histórico contiver apenas a mensagem de boas-vindas genérica, limpa para exibir a orientação da skill
+  const welcomeMsg = historyEl.querySelector('.message.ai-msg');
+  if (welcomeMsg && historyEl.children.length === 1 && (welcomeMsg.innerHTML.includes('Selecione uma Habilidade') || welcomeMsg.innerHTML.includes('Olá! 👋'))) {
+    historyEl.innerHTML = '';
+  }
+
+  const skill = await buscarSkillNoGithub(selectedKey);
+  if (skill && skill.userGuidance) {
+    appendMessageUI(`💡 **Habilidade Selecionada: ${skill.label}**\n\n${skill.userGuidance}`, 'ai-msg', false);
+  } else if (skill) {
+    appendMessageUI(`💡 **Habilidade Selecionada: ${skill.label}**\n\nHabilidade pronta para uso. Envie sua pergunta ou anexos.`, 'ai-msg', false);
+  }
 }
 
 /**
@@ -428,6 +435,10 @@ function popularSelectSkills(allowedSkills = ["ALL"]) {
 
   if (currentVal && skillsConfig[currentVal]) {
     selectEl.value = currentVal;
+  } else if (selectEl.options.length === 2) {
+    // Se só houver 1 opção permitida (excluindo a opção default disabled), seleciona-a automaticamente
+    selectEl.selectedIndex = 1;
+    exibirOrientacaoSkillSelecionada();
   }
 }
 
