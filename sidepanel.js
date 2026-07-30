@@ -502,16 +502,21 @@ async function validarUsuarioNaPlanilha(email) {
       return { authorized: false, message: "Erro na validação: " + data.error };
     }
 
-    // Retorna a lista exata de skills enviada pela planilha do Apps Script
-    const allowedSkills = Array.isArray(data.allowed_skills)
+    // Retorna a lista de skills enviada pela planilha. Se a coluna estiver vazia, libera a habilidade principal/geral por padrão
+    let allowedSkills = Array.isArray(data.allowed_skills)
       ? data.allowed_skills.map(s => s.trim().toUpperCase()).filter(Boolean)
       : [];
+
+    if (allowedSkills.length === 0) {
+      // Se não houver skills na planilha, libera por padrão a primeira skill cadastrada no manifesto (ex: SKILL-GERAL-001 ou geral)
+      allowedSkills = ["SKILL-GERAL-001", "GERAL"];
+    }
 
     return { authorized: true, allowed_skills: allowedSkills };
   } catch (err) {
     console.warn("Aviso na validação de permissão:", err);
-    // Em caso de falha de conexão, retorna lista vazia para forçar nova tentativa sem assumir IDs fixos no código
-    return { authorized: true, allowed_skills: [] };
+    // Em caso de falha de conexão, libera a primeira skill padrão
+    return { authorized: true, allowed_skills: ["SKILL-GERAL-001", "GERAL"] };
   }
 }
 
