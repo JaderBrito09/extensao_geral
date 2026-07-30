@@ -305,6 +305,8 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
 
       if (catalogData && catalogData.skills && Array.isArray(catalogData.skills)) {
         for (const item of catalogData.skills) {
+          const skillId = item.id || item.slug || item.file.replace(/^.*[\\\/]/, '').replace('.md', '');
+
           // Tenta carregar primeiro o arquivo local do pacote da extensão durante o desenvolvimento
           const localPath = 'skills-repo/' + item.file;
           const localMdUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
