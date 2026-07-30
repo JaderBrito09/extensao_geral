@@ -307,16 +307,17 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
         for (const item of catalogData.skills) {
           const skillId = item.id || item.slug || item.file.replace(/^.*[\\\/]/, '').replace('.md', '');
 
-          // Tenta carregar primeiro o arquivo local do pacote da extensão durante o desenvolvimento
-          const localPath = 'skills-repo/' + item.file;
-          const localMdUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
-            ? chrome.runtime.getURL(localPath) 
-            : './' + localPath;
-          let mdResp = await fetch(localMdUrl);
+          // 1. Consulta primeiro no repositório público de produção do GitHub (assistente-jorge-skills)
+          const rawMdUrl = `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/${item.file}`;
+          let mdResp = await fetch(rawMdUrl);
 
+          // 2. Se o GitHub falhar (404 ou offline), faz o fallback para a pasta local da extensão (skills-repo/)
           if (!mdResp.ok) {
-            const rawMdUrl = `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/${item.file}`;
-            mdResp = await fetch(rawMdUrl);
+            const localPath = 'skills-repo/' + item.file;
+            const localMdUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
+              ? chrome.runtime.getURL(localPath) 
+              : './' + localPath;
+            mdResp = await fetch(localMdUrl);
           }
 
           if (mdResp.ok) {
