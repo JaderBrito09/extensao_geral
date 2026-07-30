@@ -100,3 +100,45 @@ Quando o usuário seleciona uma habilidade no dropdown:
 3. Adicione a entrada no arquivo `skills.json` apontando para `skills/{nome_habilidade}/SKILL.md` com um `id` imutável.
 4. Faça commit e push para o repositório `assistente-jorge-skills` no GitHub.
 5. A nova habilidade ficará automaticamente disponível para todos os usuários autorizados!
+
+---
+
+## 🎛️ Janelas Interativas de Escolha (Action Cards)
+
+As Habilidades podem solicitar confirmações ou decisões do usuário durante o fluxo de conversa exibindo **Janelas Interativas com Botões Clicáveis (Action Cards)** diretamente na interface do chat do Sidepanel.
+
+### Como solicitar uma Janela Interativa no `System Prompt`:
+
+Para que o assistente renderize um card interativo com botões de opção, instrua a Habilidade no `System Prompt` a retornar um bloco de código `json` com o tipo `"interactive_prompt"`:
+
+```json
+{
+  "type": "interactive_prompt",
+  "title": "Pergunta ou instrução exibida no topo da janela interativa",
+  "options": [
+    {
+      "label": "🔨 Opção 1 (Texto exibido no botão)",
+      "value": "Executar Opção 1",
+      "badge": "Recomendado"
+    },
+    {
+      "label": "🚀 Opção 2 (Texto exibido no botão)",
+      "value": "Executar Opção 2"
+    }
+  ]
+}
+```
+
+### Propriedades do JSON Interativo:
+
+- **`type`** *(obrigatório)*: Deve ser impreterivelmente `"interactive_prompt"`.
+- **`title`** *(opcional)*: Título ou pergunta exibida no cabeçalho do card.
+- **`options`** *(obrigatório)*: Array de objetos representando os botões clicáveis:
+  - **`label`** *(obrigatório)*: Rótulo visual exibido dentro do botão.
+  - **`value`** *(opcional)*: Texto enviado automaticamente como mensagem do usuário ao clicar no botão. Se omitido, o `label` será enviado.
+  - **`badge`** *(opcional)*: Etiqueta de destaque (ex: `"Recomendado"`, `"Novo"`, `"Patch"`).
+
+### Comportamento da Extensão:
+1. O `sidepanel.js` intercepta o bloco JSON e renderiza o card gráfico estilizado.
+2. Ao clicar em um dos botões, os demais são desabilitados, o botão escolhido é destacado e o `value` é enviado automaticamente como a próxima mensagem do usuário, dando continuidade ao fluxo da Habilidade sem necessidade de digitação manual.
+

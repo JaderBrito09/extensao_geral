@@ -305,16 +305,16 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
 
       if (catalogData && catalogData.skills && Array.isArray(catalogData.skills)) {
         for (const item of catalogData.skills) {
-          const skillId = item.id || item.slug || item.file.replace(/^.*[\\\/]/, '').replace('.md', '');
-          const rawMdUrl = `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/${item.file}`;
-          let mdResp = await fetch(rawMdUrl);
+          // Tenta carregar primeiro o arquivo local do pacote da extensão durante o desenvolvimento
+          const localPath = 'skills-repo/' + item.file;
+          const localMdUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
+            ? chrome.runtime.getURL(localPath) 
+            : './' + localPath;
+          let mdResp = await fetch(localMdUrl);
 
           if (!mdResp.ok) {
-            const localPath = 'skills-repo/' + item.file;
-            const localMdUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
-              ? chrome.runtime.getURL(localPath) 
-              : './' + localPath;
-            mdResp = await fetch(localMdUrl);
+            const rawMdUrl = `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/${item.file}`;
+            mdResp = await fetch(rawMdUrl);
           }
 
           if (mdResp.ok) {
@@ -1660,14 +1660,29 @@ function appendMessageUI(text, typeClass, saveToStorage = true) {
   if (typeClass.includes('user-msg')) {
     msgDiv.textContent = text;
   } else {
-    if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
-      const rawHtml = marked.parse(text);
-      msgDiv.innerHTML = DOMPurify.sanitize(rawHtml);
-    } else if (typeof DOMPurify !== 'undefined') {
-      const fallbackHtml = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      msgDiv.innerHTML = DOMPurify.sanitize(fallbackHtml);
-    } else {
-      msgDiv.textContent = text;
+    // Se a mensagem contiver um bloco de código de prompt interativo em JSON (interactive_prompt), renderiza o card interativo
+    const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/) || [null, text];
+    let isInteractive = false;
+    try {
+      const parsedData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+      if (parsedData && parsedData.type === 'interactive_prompt' && Array.isArray(parsedData.options)) {
+        isInteractive = true;
+        renderizarCardInterativo(msgDiv, parsedData);
+      }
+    } catch (e) {
+      // Não é um JSON interativo, segue renderização normal
+    }
+
+    if (!isInteractive) {
+      if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
+        const rawHtml = marked.parse(text);
+        msgDiv.innerHTML = DOMPurify.sanitize(rawHtml);
+      } else if (typeof DOMPurify !== 'undefined') {
+        const fallbackHtml = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        msgDiv.innerHTML = DOMPurify.sanitize(fallbackHtml);
+      } else {
+        msgDiv.textContent = text;
+      }
     }
 
     // Se for uma resposta da IA e for longa (> 500 caracteres), adicionar link/botão para baixar o arquivo .md
@@ -1709,6 +1724,63 @@ function appendMessageUI(text, typeClass, saveToStorage = true) {
   }
 
   return tempId;
+}
+
+/**
+ * Renderiza um card interativo com botões de seleção de opção no chat do sidepanel
+ */
+function renderizarCardInterativo(containerEl, dadosPrompt) {
+  const cardDiv = document.createElement('div');
+  cardDiv.className = 'interactive-option-card';
+  
+  if (dadosPrompt.title) {
+    const titleEl = document.createElement('div');
+    titleEl.className = 'interactive-title';
+    titleEl.textContent = dadosPrompt.title;
+    cardDiv.appendChild(titleEl);
+  }
+
+  const optionsGroup = document.createElement('div');
+  optionsGroup.className = 'interactive-options-group';
+
+  dadosPrompt.options.forEach((opcao, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'interactive-option-btn';
+
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'option-label';
+    labelSpan.textContent = opcao.label || opcao.text || `Opção ${idx + 1}`;
+    
+    if (opcao.badge) {
+      const badgeSpan = document.createElement('span');
+      badgeSpan.className = 'option-badge';
+      badgeSpan.textContent = opcao.badge;
+      btn.appendChild(badgeSpan);
+    }
+
+    btn.appendChild(labelSpan);
+
+    btn.addEventListener('click', () => {
+      // Desabilita todos os botões do card após seleção
+      optionsGroup.querySelectorAll('.interactive-option-btn').forEach(b => {
+        b.disabled = true;
+        b.classList.add('disabled');
+      });
+      btn.classList.add('selected');
+
+      // Preenche o input e envia a resposta selecionada
+      const textoParaEnviar = opcao.value || opcao.label || opcao.text;
+      if (userInputEl) {
+        userInputEl.value = textoParaEnviar;
+        processarRequisicao();
+      }
+    });
+
+    optionsGroup.appendChild(btn);
+  });
+
+  cardDiv.appendChild(optionsGroup);
+  containerEl.appendChild(cardDiv);
 }
 
 function removeMessageUI(id) {
