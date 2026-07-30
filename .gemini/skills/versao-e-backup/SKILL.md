@@ -17,67 +17,61 @@ Esta skill gerencia a numeração automática de versões (SemVer `MAJOR.MINOR.P
 
 ---
 
-## 🚀 Fluxo de Execução Automática de Versão e Backup
+## 🔗 Orquestração Multiskill (Como esta Skill Aciona as Demais)
 
-Ao ser acionada, se o tipo de incremento (`patch`, `minor` ou `major`) **não tiver sido especificado explicitamente na chamada**, o assistente DEVE obrigatoriamente fazer a pergunta interativa ao usuário primeiro.
+Quando a skill **`versao-e-backup`** é executada, ela orquestra o ecossistema chamando automaticamente as skills necessárias na seguinte ordem:
+
+```mermaid
+flowchart TD
+    A[Início: versao-e-backup] --> B[Pergunta Interativa SemVer]
+    B --> C[Aciona test-automation-and-qa]
+    C --> D{Testes Passaram?}
+    D -- Não --> E[Abortar Operação]
+    D -- Sim --> F[Aciona depuracao e a11y]
+    F --> G[Atualiza manifest.json e README.md]
+    G --> H[Aciona documentation-and-changelog]
+    H --> I[Gera Pacote .zip de Release]
+    I --> J[Aciona gerenciamento-repositorios]
+    J --> K[Commit, Tag vX.Y.Z e Push no GitHub]
+```
+
+---
+
+## 🚀 Fluxo de Execução Orquestrado
 
 ### ❓ Passo 0: Pergunta Interativa de Tipo de Incremento (Obrigatória se não especificado)
 
-O assistente apresentará as opções ao usuário antes de alterar qualquer código:
+Se o tipo de incremento (`patch`, `minor` ou `major`) não for informado na chamada, pergunte ao usuário:
 
 > **Qual o tipo de atualização que está sendo lançada para o Assistente do Jorge?**
 > 1. **Patch (1.2.2)** — Correção de bugs, refatoração interna ou ajustes na documentação.
 > 2. **Minor (1.3.0)** — Novas funcionalidades e recursos adicionados à extensão.
 > 3. **Major (2.0.0)** — Grandes mudanças de arquitetura ou breaking changes.
 
-Assim que o usuário responder ou selecionar a opção, o assistente prosseguirá automaticamente com as etapas abaixo:
-
 ---
 
-### 1. Ler a Versão Atual e Calcular o Incremento
-- Ler a versão atual no arquivo [`manifest.json`](file:///Users/jader/Meu%20Drive/extensao_geral/manifest.json) (propriedade `"version"`).
-- Aplicar o incremento SemVer escolhido pelo usuário (`patch`, `minor` ou `major`).
+### Passo 1: Validação de Qualidade (Chama `test-automation-and-qa`)
+- Acionar a skill de QA para rodar os testes unitários (`node tests/test.js`).
+- *Se algum teste falhar, abortar imediatamente a geração da versão.*
 
-### 2. Executar Validação de Testes Unitários
-- Rodar a suíte de testes do projeto:
-  ```bash
-  node tests/test.js
-  ```
-  *Se qualquer teste falhar, a geração de versão é imediatamente abortada.*
+### Passo 2: Auditoria de Acessibilidade & Código (Chama `depuracao` & `chrome-extensions`)
+- Garantir que nenhum atributo ARIA ou regra de Manifest V3 tenha sido quebrado.
 
-### 3. Atualizar a Versão nos Arquivos do Projeto
-- **`manifest.json`**: Atualizar a propriedade `"version": "X.Y.Z"`.
-- **`README.md`**: Atualizar o comando do pacote `.zip` de produção (`assistente-jorge-extension-vX.Y.Z.zip`).
+### Passo 3: Atualizar Números de Versão
+- Ler a versão atual no [`manifest.json`](file:///Users/jader/Meu%20Drive/extensao_geral/manifest.json).
+- Incrementar a propriedade `"version"` conforme o tipo escolhido (`patch`, `minor` ou `major`).
+- Atualizar a referência de comando no [`README.md`](file:///Users/jader/Meu%20Drive/extensao_geral/README.md).
 
-### 4. Gerar o Pacote `.zip` de Produção (Backup Físico de Release)
-- Gerar o arquivo `.zip` limpo (ignorando `.DS_Store` e arquivos de desenvolvimento):
+### Passo 4: Atualizar Documentação (Chama `documentation-and-changelog`)
+- Atualizar links relativos e notas de versão.
+
+### Passo 5: Gerar o Pacote `.zip` de Produção (Backup Físico)
+- Gerar o pacote empacotado limpo para a Chrome Web Store e GitHub Releases:
   ```bash
   zip -r assistente-jorge-extension-vX.Y.Z.zip manifest.json sidepanel.html sidepanel.js sidepanel.css background.js icons/ lib/ -x "*.DS_Store"
   ```
 
-### 5. Comitar e Criar Tag no Git (Backup Histórico Permanente)
-- Comitar a alteração de versão:
-  ```bash
-  git add manifest.json README.md
-  git commit -m "chore(release): bump version to vX.Y.Z"
-  ```
-- Criar a **Git Tag anotada** para congelar o estado exato desta versão:
-  ```bash
-  git tag -a vX.Y.Z -m "Release vX.Y.Z do Assistente do Jorge"
-  ```
-
-### 6. Sincronizar com o GitHub
-- Enviar os commits e as tags anotadas para o GitHub remoto:
-  ```bash
-  git push origin main
-  git push origin vX.Y.Z
-  ```
-
----
-
-## 🛡️ Melhores Práticas Utilizadas
-
-- **Interatividade & Controle**: Garante que nenhuma versão seja incrementada sem o consentimento e a classificação explícita do usuário.
-- **Sincronia SemVer**: A versão em `manifest.json`, `README.md` e Git Tag são mantidas rigorosamente idênticas.
-- **Git Tags Anotadas**: Qualquer versão anterior pode ser restaurada ou inspecionada a qualquer momento com `git checkout vX.Y.Z`.
-- **Release Isolada**: Os arquivos `.zip` permanecem ignorados pelo repositório principal e são utilizados para publicação nas **Releases do GitHub** e na **Chrome Web Store**.
+### Passo 6: Commit, Tag e Sincronização (Chama `gerenciamento-repositorios`)
+- Criar o commit no padrão Conventional Commits (`chore(release): bump version to vX.Y.Z`).
+- Criar a **Git Tag anotada** de backup permanente (`git tag -a vX.Y.Z -m "Release vX.Y.Z do Assistente do Jorge"`).
+- Sincronizar o repositório e enviar as tags para o GitHub (`git push origin main --tags`).
