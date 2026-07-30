@@ -20,3 +20,7 @@ credentials/
 env.json
 # Documentação com parâmetros de infraestrutura interna sensíveis
 docs/SETUP_E_INFRAESTRUTURA.md
+
+# Configurações locais e habilidades de agente (.gemini)
+.gemini/
+
