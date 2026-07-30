@@ -48,7 +48,7 @@ Ao ser acionada para comitar ou sincronizar o repositório, o assistente DEVE ex
    git commit -m "feat(sidepanel): adiciona suporte a novos tipos de anexos e suporte a a11y"
    ```
 
-### Etapa 3: Sincronização com o GitHub
+### Etapa 3: Sincronização com o GitHub & Gestão de Versão
 1. Verificar se o remoto está configurado (`git remote -v`). Se o repositório for novo, adicionar o remote:
    ```bash
    git remote add origin https://github.com/JaderBrito09/<nome-do-repositorio>.git
@@ -57,6 +57,8 @@ Ao ser acionada para comitar ou sincronizar o repositório, o assistente DEVE ex
    ```bash
    git push origin main
    ```
+3. **Integração com Lançamento de Versão**:
+   - Caso as alterações representem um novo lançamento de pacote/release (bump de versão), acionar em sequência a skill **`versao-e-backup`** para calcular o SemVer (`patch`, `minor` ou `major`), empacotar o arquivo `.zip` e registrar a **Git Tag anotada**.
 
 ---
 
