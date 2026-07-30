@@ -18,5 +18,5 @@ Captura de Tela*.png
 client_secret_*.json
 credentials/
 env.json
-.env
-
+# Documentação com parâmetros de infraestrutura interna sensíveis
+docs/SETUP_E_INFRAESTRUTURA.md

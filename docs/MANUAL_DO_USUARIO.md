@@ -54,12 +54,13 @@ A interface do assistente é organizada de forma intuitiva:
 
 ## 💡 3. Como Selecionar e Utilizar Habilidades
 
-O Assistente possui **Habilidades Especiais (Skills)** catalogadas e atualizadas continuamente:
+O Assistente possui **Habilidades Especiais (Skills)** catalogadas e mantidas no repositório oficial [`JaderBrito09/assistente-jorge-skills`](https://github.com/JaderBrito09/assistente-jorge-skills):
 
 1. No menu suspenso **"Selecione uma habilidade"**, escolha a instrução desejada:
    - **Consulta Livre**: Para perguntas gerais, resumos de páginas e análises livres.
    - **Validador IMGG 100 Pontos** *(GestãoGov)*: Para validação técnica de relatórios de governança e gestão.
 2. Ao selecionar uma habilidade, um **Card de Orientação Inicial** será exibido com dicas de uso específicas para aquela tarefa.
+3. Novas habilidades disponibilizadas pela equipe no repositório do GitHub aparecerão automaticamente no seu menu suspenso sem necessidade de atualizar a extensão no Chrome!
 
 ---
 

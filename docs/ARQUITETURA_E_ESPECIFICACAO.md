@@ -14,6 +14,10 @@ O **Assistente do Jorge** é uma extensão de navegador (Chrome Manifest V3) pro
 3. **Anexos e Documentos**: Processamento e consolidação textual de arquivos enviados pelo usuário ou detectados na página.
 4. **Habilidades Especialistas**: Injeção dinâmica de *System Instructions* via arquivos Markdown no GitHub.
 
+### 🔗 Repositórios do GitHub
+* **Extensão e Código-Fonte**: [`https://github.com/JaderBrito09/extensao_geral`](https://github.com/JaderBrito09/extensao_geral)
+* **Catálogo e Habilidades (Skills)**: [`https://github.com/JaderBrito09/assistente-jorge-skills`](https://github.com/JaderBrito09/assistente-jorge-skills) (Raw endpoint: `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/`)
+
 ---
 
 ## 🏛️ Arquitetura de Software & Fluxo de Comunicação
@@ -67,7 +71,7 @@ sequenceDiagram
 - **Justificativa**: Protege a chave de API (`GEMINI_API_KEY`) do lado do servidor, valida a permissão do usuário diretamente na Planilha Google Sheets e evita a exposição de segredos no código da extensão.
 
 ### ADR-003: Habilidades Dinâmicas via Catálogo `skills.json` no GitHub
-- **Decisão**: Armazenar as habilidades em um repositório exclusivo do GitHub (`assistente-jorge-skills`) e catalogá-las no manifesto `skills.json`.
+- **Decisão**: Armazenar as habilidades em um repositório exclusivo do GitHub (`https://github.com/JaderBrito09/assistente-jorge-skills`) e catalogá-las no manifesto `skills.json` (`https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/skills.json`). O código da extensão permanece no repositório principal (`https://github.com/JaderBrito09/extensao_geral`).
 - **Justificativa**: Permite a publicação, atualização e versão contínua de novas habilidades por especialistas de domínio sem necessidade de re-compilar ou publicar atualizações da extensão na Chrome Web Store.
 
 ---

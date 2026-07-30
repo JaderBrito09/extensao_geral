@@ -6,7 +6,7 @@ Este guia orienta especialistas de domínio e desenvolvedores sobre como criar, 
 
 ## 🏗️ Estrutura do Repositório Exclusivo de Skills (`assistente-jorge-skills`)
 
-Todas as habilidades residentes no repositório exclusivo do GitHub **`JaderBrito09/assistente-jorge-skills`** seguem uma estrutura modular, onde cada **Skill possui sua própria pasta** e pode conter **subpastas auxiliares** acionáveis (scripts, bases de conhecimento, referências):
+Todas as habilidades residentes no repositório exclusivo do GitHub [**`JaderBrito09/assistente-jorge-skills`**](https://github.com/JaderBrito09/assistente-jorge-skills) seguem uma estrutura modular, onde cada **Skill possui sua própria pasta** e pode conter **subpastas auxiliares** acionáveis (scripts, bases de conhecimento, referências):
 
 ```text
 assistente-jorge-skills/
@@ -60,9 +60,9 @@ O arquivo `skills.json` registra os metadados de cada habilidade disponível:
 
 ## 📝 Especificação do Arquivo Markdown (`SKILL.md`)
 
-Cada habilidade deve conter seu arquivo principal `SKILL.md` dentro de sua respectiva pasta, contendo exatamente as 3 seções obrigatórias estruturadas abaixo:
+Cada habilidade deve conter seu arquivo principal `SKILL.md` dentro de sua respectiva pasta no repositório [`JaderBrito09/assistente-jorge-skills`](https://github.com/JaderBrito09/assistente-jorge-skills), contendo exatamente as 3 seções obrigatórias estruturadas abaixo:
 
-### Exemplo Completo ([skills/geral/SKILL.md](file:///Users/jader/Meu%20Drive/extensao_geral/skills-repo/skills/geral/SKILL.md)):
+### Exemplo Completo (`skills/geral/SKILL.md`):
 
 ```markdown
 # Skill: Análise e Consulta Livre (Geral)
