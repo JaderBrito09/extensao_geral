@@ -385,9 +385,14 @@ function popularSelectSkills(allowedSkills = ["ALL"]) {
 
   for (const [key, skill] of Object.entries(skillsConfig)) {
     const skillIdUpper = (skill.id || key).toUpperCase();
+    const skillSlugUpper = (skill.slug || key).toUpperCase();
+    const skillCatUpper = (skill.category || "").toUpperCase();
 
-    // Só exibe a skill se for ALL/* ou o ID exato estiver na lista
-    const hasPermission = isAllAllowed || normalizedAllowed.includes(skillIdUpper);
+    // Só exibe a skill se for ALL/* ou se o ID, Slug ou Categoria estiver na lista de permissões da planilha
+    const hasPermission = isAllAllowed || 
+      normalizedAllowed.includes(skillIdUpper) || 
+      normalizedAllowed.includes(skillSlugUpper) ||
+      normalizedAllowed.includes(skillCatUpper);
 
     if (hasPermission && !addedIds.has(skillIdUpper)) {
       addedIds.add(skillIdUpper);
@@ -405,7 +410,6 @@ function popularSelectSkills(allowedSkills = ["ALL"]) {
 
 // Init SidePanel & Session
 async function initSidePanel() {
-  await carregarSkillsDinamicas();
   await verificarStatusAuth();
 
   const data = await chrome.storage.local.get(['chat_sessions', 'active_chat_id']);
