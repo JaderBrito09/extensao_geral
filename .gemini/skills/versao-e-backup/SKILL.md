@@ -9,54 +9,65 @@ Esta skill gerencia a numeração automática de versões (SemVer `MAJOR.MINOR.P
 
 ---
 
-## 🎯 Tipos de Incremento de Versão
+## 🎯 Tipos de Incremento de Versão (SemVer)
 
-Ao acionar esta skill, especifique o tipo de versão desejado (ou o agente determinará com base nas alterações):
-
-1. **`patch`** (ex: `1.2.1` -> `1.2.2`): Correções de bugs, pequenas melhorias visuais ou atualizações de documentação.
-2. **`minor`** (ex: `1.2.1` -> `1.3.0`): Novas funcionalidades retrocompatíveis (novos recursos no chat, suporte a mídias, etc.).
-3. **`major`** (ex: `1.2.1` -> `2.0.0`): Mudanças estruturais grandes ou incompatíveis na arquitetura da extensão.
+1. **`patch`** (ex: `1.2.1` -> `1.2.2`): Correções de bugs, pequenas melhorias visuais ou ajustes na documentação.
+2. **`minor`** (ex: `1.2.1` -> `1.3.0`): Novas funcionalidades retrocompatíveis (ex: suporte a mídias, histórico de sessões, novas abas).
+3. **`major`** (ex: `1.2.1` -> `2.0.0`): Reformulações grandes da arquitetura ou mudanças incompatíveis com a versão anterior.
 
 ---
 
 ## 🚀 Fluxo de Execução Automática de Versão e Backup
 
-Quando a skill for acionada, o assistente DEVE executar obrigatoriamente o seguinte fluxo:
+Ao ser acionada, se o tipo de incremento (`patch`, `minor` ou `major`) **não tiver sido especificado explicitamente na chamada**, o assistente DEVE obrigatoriamente fazer a pergunta interativa ao usuário primeiro.
 
-### 1. Ler e Calcular a Nova Versão
-- Ler a versão atual no arquivo [`manifest.json`](file:///Users/jader/Meu%20Drive/extensao_geral/manifest.json).
-- Calcular a nova versão incrementada conforme o tipo escolhido (`patch`, `minor` ou `major`).
+### ❓ Passo 0: Pergunta Interativa de Tipo de Incremento (Obrigatória se não especificado)
 
-### 2. Executar Validação de Testes
-- Rodar a suíte de testes unitários do projeto:
+O assistente apresentará as opções ao usuário antes de alterar qualquer código:
+
+> **Qual o tipo de atualização que está sendo lançada para o Assistente do Jorge?**
+> 1. **Patch (1.2.2)** — Correção de bugs, refatoração interna ou ajustes na documentação.
+> 2. **Minor (1.3.0)** — Novas funcionalidades e recursos adicionados à extensão.
+> 3. **Major (2.0.0)** — Grandes mudanças de arquitetura ou breaking changes.
+
+Assim que o usuário responder ou selecionar a opção, o assistente prosseguirá automaticamente com as etapas abaixo:
+
+---
+
+### 1. Ler a Versão Atual e Calcular o Incremento
+- Ler a versão atual no arquivo [`manifest.json`](file:///Users/jader/Meu%20Drive/extensao_geral/manifest.json) (propriedade `"version"`).
+- Aplicar o incremento SemVer escolhido pelo usuário (`patch`, `minor` ou `major`).
+
+### 2. Executar Validação de Testes Unitários
+- Rodar a suíte de testes do projeto:
   ```bash
   node tests/test.js
   ```
-  *Se houver falha, a geração de versão é abortada.*
+  *Se qualquer teste falhar, a geração de versão é imediatamente abortada.*
 
-### 3. Atualizar Arquivos do Projeto com a Nova Versão
+### 3. Atualizar a Versão nos Arquivos do Projeto
 - **`manifest.json`**: Atualizar a propriedade `"version": "X.Y.Z"`.
 - **`README.md`**: Atualizar o comando do pacote `.zip` de produção (`assistente-jorge-extension-vX.Y.Z.zip`).
 
 ### 4. Gerar o Pacote `.zip` de Produção (Backup Físico de Release)
-- Gerar o pacote empacotado limpo (ignorando `.DS_Store` e arquivos de dev):
+- Gerar o arquivo `.zip` limpo (ignorando `.DS_Store` e arquivos de desenvolvimento):
   ```bash
   zip -r assistente-jorge-extension-vX.Y.Z.zip manifest.json sidepanel.html sidepanel.js sidepanel.css background.js icons/ lib/ -x "*.DS_Store"
   ```
 
-### 5. Comitar e Taggear no Git (Backup Histórico Permanente)
-- Adicionar as alterações de versão ao Git:
+### 5. Comitar e Criar Tag no Git (Backup Histórico Permanente)
+- Comitar a alteração de versão:
   ```bash
   git add manifest.json README.md
   git commit -m "chore(release): bump version to vX.Y.Z"
   ```
-- Criar uma **Git Tag anotada** para backup e rastreabilidade da versão:
+- Criar a **Git Tag anotada** para congelar o estado exato desta versão:
   ```bash
   git tag -a vX.Y.Z -m "Release vX.Y.Z do Assistente do Jorge"
   ```
 
 ### 6. Sincronizar com o GitHub
-- Enviar os commits e as tags anotadas para o GitHub:
+- Enviar os commits e as tags anotadas para o GitHub remoto:
   ```bash
   git push origin main
   git push origin vX.Y.Z
@@ -66,6 +77,7 @@ Quando a skill for acionada, o assistente DEVE executar obrigatoriamente o segui
 
 ## 🛡️ Melhores Práticas Utilizadas
 
+- **Interatividade & Controle**: Garante que nenhuma versão seja incrementada sem o consentimento e a classificação explícita do usuário.
 - **Sincronia SemVer**: A versão em `manifest.json`, `README.md` e Git Tag são mantidas rigorosamente idênticas.
-- **Git Tags Anotadas**: Garantem que qualquer versão anterior possa ser restaurada com um simples `git checkout v1.2.1`.
-- **Release Isolada**: O arquivo `.zip` permanece ignorado pelo `.gitignore` do repositório principal para não poluir o histórico de código, sendo reservado para publicação na aba de **Releases do GitHub** e submissão na **Chrome Web Store**.
+- **Git Tags Anotadas**: Qualquer versão anterior pode ser restaurada ou inspecionada a qualquer momento com `git checkout vX.Y.Z`.
+- **Release Isolada**: Os arquivos `.zip` permanecem ignorados pelo repositório principal e são utilizados para publicação nas **Releases do GitHub** e na **Chrome Web Store**.
