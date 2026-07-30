@@ -327,6 +327,17 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
             parsed.label = item.name || parsed.label || skillId;
             parsed.category = item.category || parsed.category || "Geral";
             downloadedSkills[skillId] = parsed;
+          } else {
+            // Se o arquivo .md ainda não existir remotamente/localmente, registra a skill usando os metadados do manifesto
+            downloadedSkills[skillId] = {
+              id: skillId,
+              slug: item.slug || skillId,
+              label: item.name || skillId,
+              category: item.category || "Geral",
+              description: item.name || "",
+              userGuidance: `💡 **${item.name}:** Habilidade pronta para uso.`,
+              systemPrompt: `Atue como um assistente especializado na habilidade ${item.name}.`
+            };
           }
         }
       }
