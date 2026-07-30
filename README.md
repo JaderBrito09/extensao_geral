@@ -39,13 +39,14 @@ O pacote compilado é gerado como `assistente-jorge-extension-v1.2.1.zip` na rai
 
 ## 📚 Documentação do Projeto
 
-Toda a documentação técnica e arquitetural do projeto está centralizada na pasta [`docs/`](file:///Users/jader/Meu%20Drive/extensao_geral/docs):
+Toda a documentação técnica e arquitetural pública do projeto está disponível na pasta [`docs/`](docs/):
 
 | Documento | Descrição |
 | :--- | :--- |
-| 🛠️ [SETUP_E_INFRAESTRUTURA.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/SETUP_E_INFRAESTRUTURA.md) | Manual de Instalação, Deploy do Apps Script Proxy, Planilha de Controle e Tabela Oficial de Parâmetros. |
-| 📖 [MANUAL_DO_USUARIO.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/MANUAL_DO_USUARIO.md) | Guia ilustrado do usuário final: instalação, login, seleção de skills, leitura de documentos e histórico. |
-| 🚀 [GUIA_PUBLICACAO_CHROME_STORE.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/GUIA_PUBLICACAO_CHROME_STORE.md) | Passo a passo de publicação com Acesso Restrito / Não Listado na Chrome Web Store. |
-| 🏗️ [ARQUITETURA_E_ESPECIFICACAO.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/ARQUITETURA_E_ESPECIFICACAO.md) | Arquitetura técnica, especificações de produto, diagramas de fluxo, ADRs de design e políticas de privacidade. |
-| 📋 [BACKLOG_E_USER_STORIES.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/BACKLOG_E_USER_STORIES.md) | Planejamento de produto, Histórias de Usuário (User Stories) e acompanhamento de Sprints (1 a 12). |
-| 💡 [GUIA_DE_SKILLS.md](file:///Users/jader/Meu%20Drive/extensao_geral/docs/GUIA_DE_SKILLS.md) | Guia do criador de Habilidades, sintaxe Markdown, manifesto `skills.json` e integração com GitHub. |
+| 📖 [MANUAL_DO_USUARIO.md](docs/MANUAL_DO_USUARIO.md) | Guia ilustrado do usuário final: instalação, login, seleção de skills, leitura de documentos e histórico. |
+| 🚀 [GUIA_PUBLICACAO_CHROME_STORE.md](docs/GUIA_PUBLICACAO_CHROME_STORE.md) | Passo a passo de publicação com Acesso Restrito / Não Listado na Chrome Web Store. |
+| 🏗️ [ARQUITETURA_E_ESPECIFICACAO.md](docs/ARQUITETURA_E_ESPECIFICACAO.md) | Arquitetura técnica, especificações de produto, diagramas de fluxo, ADRs de design e políticas de privacidade. |
+| 📋 [BACKLOG_E_USER_STORIES.md](docs/BACKLOG_E_USER_STORIES.md) | Planejamento de produto, Histórias de Usuário (User Stories) e acompanhamento de Sprints (1 a 12). |
+| 💡 [GUIA_DE_SKILLS.md](docs/GUIA_DE_SKILLS.md) | Guia do criador de Habilidades, sintaxe Markdown, manifesto `skills.json` e integração com GitHub. |
+
+> *Nota: Documentações sensíveis contendo IDs internos de infraestrutura (como `SETUP_E_INFRAESTRUTURA.md`) e pastas de credenciais são privadas e não são enviadas para o repositório público.*

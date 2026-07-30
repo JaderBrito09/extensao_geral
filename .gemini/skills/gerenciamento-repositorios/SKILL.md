@@ -13,14 +13,18 @@ Esta skill orienta e executa a criação, atualização e gerenciamento dos repo
 
 Ao ser acionada para comitar ou sincronizar o repositório, o assistente DEVE executar obrigatoriamente a seguinte sequência de ações:
 
-### Etapa 1: Validação de Segurança & Testes
+### Etapa 1: Validação de Segurança & Links de Documentação
 1. Rodar os testes de regressão automatizados:
    ```bash
    node tests/test.js
    ```
    *Se algum teste falhar, o commit DEVE ser interrompido até que os erros sejam corrigidos.*
 
-2. Inspecionar os arquivos modificados e pendentes:
+2. Validar links em arquivos de documentação (`README.md`, `docs/*.md`):
+   - Garantir que todos os links para documentações utilizem **caminhos relativos simples do GitHub** (ex: `docs/MANUAL_DO_USUARIO.md` em vez de esquemas de arquivo local `file:///...`).
+   - Confirmar que nenhum documento público faz referência direta a arquivos privados bloqueados pelo `.gitignore` (ex: `SETUP_E_INFRAESTRUTURA.md`, `credentials/`) sem a devida ressalva/nota explicativa.
+
+3. Inspecionar os arquivos modificados e pendentes:
    ```bash
    git status
    ```
@@ -94,6 +98,7 @@ Ao ser acionada para comitar ou sincronizar o repositório, o assistente DEVE ex
 ## 🛡️ Checklist de Segurança de Pré-Commit
 
 - [ ] Suíte de testes (`node tests/test.js`) executou e passou 100%.
+- [ ] Links nos arquivos Markdown de documentação (`README.md`, etc.) usam **caminhos relativos do GitHub** (`docs/...`) e não caminhos locais `file:///...`.
 - [ ] O `git status` foi verificado para impedir inclusão acidental de credenciais.
 - [ ] O `.gitignore` contém regras para bloqueio de `.env`, `credentials/`, `SETUP_E_INFRAESTRUTURA.md` e `.zip`.
 - [ ] Mensagem de commit atende ao padrão Conventional Commits.
