@@ -1,9 +1,15 @@
 # Arquivos temporários e de build
 node_modules/
+**/node_modules/
 .DS_Store
+**/.DS_Store
 .vscode/
 .idea/
 *.log
+*.zip
+
+# Screenshots e mídias temporárias soltas na raiz
+Captura de Tela*.png
 
 # Chaves privadas e credenciais sensíveis
 *.pem
@@ -13,3 +19,4 @@ client_secret_*.json
 credentials/
 env.json
 .env
+

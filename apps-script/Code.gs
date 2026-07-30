@@ -6,7 +6,7 @@
  * 1. Receber requisições da extensão do Chrome via HTTP POST (doPost)
  * 2. Validar o e-mail do usuário autenticado na Planilha Google Sheets de permissões
  * 3. Recuperar a GEMINI_API_KEY armazenada com segurança nas Script Properties
- * 4. Chamar a API do Gemini (gemini-1.5-flash) via UrlFetchApp
+ * 4. Chamar a API do Gemini (gemini-2.5-flash) via UrlFetchApp
  * 5. Retornar a resposta sanitizada ou mensagens de erro de permissão
  */
 

@@ -37,6 +37,8 @@ const selectEl = document.getElementById('task-select');
 const historyEl = document.getElementById('chat-history');
 const clearHistoryBtn = document.getElementById('clear-history-btn');
 const pageInfoBadge = document.getElementById('page-info-badge');
+const pageReadingIndicator = document.getElementById('page-reading-indicator');
+const pageReadingText = document.getElementById('page-reading-text');
 
 // Elements - Botões de Topo e Histórico de Sessões
 const newChatBtn = document.getElementById('new-chat-btn');
@@ -208,10 +210,10 @@ async function buscarSkillNoGithub(skillKey) {
   }
 
   try {
-    let url = `https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/skills-repo/skills/${skillKey}/SKILL.md`;
+    let url = `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/skills/${skillKey}/SKILL.md`;
     let resp = await fetch(url);
     if (!resp.ok) {
-      url = `https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/skills-repo/skills/${skillKey}.md`;
+      url = `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/skills/${skillKey}.md`;
       resp = await fetch(url);
     }
 
@@ -285,8 +287,8 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
   try {
     const now = Date.now();
 
-    // 1. Tentar ler o catálogo skills.json no repositório principal extensao_geral
-    let catalogUrl = "https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/skills-repo/skills.json";
+    // 1. Tentar ler o catálogo skills.json no repositório exclusivo assistente-jorge-skills
+    let catalogUrl = "https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/skills.json";
     let catResp = await fetch(catalogUrl);
 
     if (!catResp.ok) {
@@ -304,7 +306,7 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
       if (catalogData && catalogData.skills && Array.isArray(catalogData.skills)) {
         for (const item of catalogData.skills) {
           const skillId = item.id || item.slug || item.file.replace(/^.*[\\\/]/, '').replace('.md', '');
-          const rawMdUrl = `https://raw.githubusercontent.com/JaderBrito09/extensao_geral/main/skills-repo/${item.file}`;
+          const rawMdUrl = `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/${item.file}`;
           let mdResp = await fetch(rawMdUrl);
 
           if (!mdResp.ok) {
@@ -1279,23 +1281,204 @@ function escapeHtml(str) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-// Extraction Script injected into Active Tab
-function extractCleanDOMText() {
-  const clone = document.body.cloneNode(true);
-  const hasMainOrArticle = clone.querySelector('main, article') !== null;
+// Função de diagnósticos de limitações de leitura da página (ex: Google Sheets/Canvas/CSP)
+function detectPageAccessStatus(tab, pageContentRaw) {
+  const url = tab?.url || "";
+  const isProtectedSystemPage = url.startsWith('chrome://') || url.startsWith('chrome-extension://') || url.startsWith('about:');
   
-  let noiseSelectors = ['script', 'style', 'noscript', 'iframe', 'svg'];
-  if (hasMainOrArticle) {
-    noiseSelectors.push('nav', 'header', 'footer');
+  if (isProtectedSystemPage) {
+    return {
+      restricted: true,
+      reason: 'system_page',
+      badgeText: "Aba de sistema (foco nos anexos)",
+      serviceName: "Página interna do navegador"
+    };
   }
 
-  noiseSelectors.forEach(selector => {
-    clone.querySelectorAll(selector).forEach(el => el.remove());
-  });
+  // Identificação de serviços baseados em Canvas ou com restrições conhecidas
+  const isSheets = url.includes('docs.google.com/spreadsheets');
+  const isFigma = url.includes('figma.com');
+  const isCanva = url.includes('canva.com');
+  const isGoogleDocs = url.includes('docs.google.com/document');
+  const isGoogleSlides = url.includes('docs.google.com/presentation');
 
-  const mainContent = clone.querySelector('main, article') || clone;
-  let rawText = mainContent.innerText || mainContent.textContent || '';
-  return rawText.replace(/\s+/g, ' ').trim();
+  if (isSheets) {
+    return {
+      restricted: true,
+      reason: 'sheets_canvas',
+      badgeText: "⚠️ Leitura limitada: Google Sheets (Canvas)",
+      serviceName: "Google Sheets"
+    };
+  }
+
+  if (isFigma || isCanva || isGoogleSlides) {
+    const service = isFigma ? "Figma" : isCanva ? "Canva" : "Google Apresentações";
+    return {
+      restricted: true,
+      reason: 'canvas_app',
+      badgeText: `⚠️ Leitura limitada: ${service} (Canvas)`,
+      serviceName: service
+    };
+  }
+
+  // Avaliação por densidade de texto do DOM extraído
+  const cleanedLength = (pageContentRaw || "").trim().length;
+  if (cleanedLength < 80) {
+    return {
+      restricted: true,
+      reason: 'empty_dom',
+      badgeText: "⚠️ Leitura limitada: Conteúdo de tela protegido/vazio",
+      serviceName: "Página com proteção CSP/DOM restrito"
+    };
+  }
+
+  return {
+    restricted: false,
+    reason: null,
+    badgeText: `${Math.min(cleanedLength, MAX_PAGE_CHARS)} chars lidos da página`,
+    serviceName: null
+  };
+}
+
+// Extraction Script injected into Active Tab (suporta SPAs, TreeWalker, Shadow DOM, limitação de ruídos de UI e polling dinâmico)
+async function extractCleanDOMText() {
+  function getDeepText(node) {
+    if (!node) return '';
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent || '';
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return '';
+    }
+
+    const tagName = node.tagName ? node.tagName.toLowerCase() : '';
+    if (['script', 'style', 'noscript', 'iframe', 'svg', 'button'].includes(tagName)) {
+      return '';
+    }
+
+    let text = '';
+    if (node.shadowRoot) {
+      for (const child of node.shadowRoot.childNodes) {
+        text += ' ' + getDeepText(child);
+      }
+    }
+
+    for (const child of node.childNodes) {
+      text += ' ' + getDeepText(child);
+    }
+
+    return text;
+  }
+
+  function getSnapshotText() {
+    const rootElement = document.body;
+    if (!rootElement) return '';
+
+    // Clonar para manipulação limpa sem alterar o DOM real da página
+    const clone = rootElement.cloneNode(true);
+
+    // Seletores de ruído de interface (botões, cabeçalhos de usuário, navs, footers, elementos de ação)
+    const excludeSelectors = [
+      'script', 'style', 'noscript', 'svg',
+      'button', 'input[type="button"]', 'input[type="submit"]',
+      '.btn', '.button', '.menu', '.nav', '.navbar', '.header-usuario',
+      'header', 'footer', 'nav'
+    ];
+
+    // Remove elementos indesejados no clone
+    excludeSelectors.forEach(selector => {
+      clone.querySelectorAll(selector).forEach(el => el.remove());
+    });
+
+    // Preserva links úteis inserindo a URL entre parênteses ao lado do texto
+    clone.querySelectorAll('a[href]').forEach(a => {
+      const href = a.getAttribute('href');
+      if (href && !href.startsWith('javascript:') && !href.startsWith('#')) {
+        const text = a.textContent.trim();
+        if (text) {
+          a.textContent = `${text} (${href})`;
+        }
+      }
+    });
+
+    // Varredura via TreeWalker para preservar separação adequada de termos e evitar termos colados
+    const textParts = [];
+    const walker = document.createTreeWalker(
+      clone,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: function(node) {
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_ACCEPT;
+          const tag = parent.tagName.toLowerCase();
+          if (['script', 'style', 'noscript', 'button'].includes(tag)) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }
+    );
+
+    let currentNode;
+    while ((currentNode = walker.nextNode())) {
+      const text = currentNode.nodeValue ? currentNode.nodeValue.trim() : '';
+      if (text.length > 0) {
+        textParts.push(text);
+      }
+    }
+
+    let rawText = textParts.join(' ');
+
+    // Varredura recursiva de iFrames acessíveis (Same-Origin) dentro do contexto atual
+    try {
+      const iframes = clone.querySelectorAll('iframe');
+      iframes.forEach(iframe => {
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+          if (iframeDoc && iframeDoc.body) {
+            const iframeText = iframeDoc.body.innerText || iframeDoc.body.textContent || '';
+            if (iframeText.trim().length > 0) {
+              rawText += '\n\n--- [CONTEÚDO DE IFRAME EMBUTIDO] ---\n\n' + iframeText.replace(/\s+/g, ' ').trim();
+            }
+          }
+        } catch (e) {
+          // Ignora se for restrição Cross-Origin (trado via allFrames: true pelo Chrome API)
+        }
+      });
+    } catch (err) {
+      // Ignora falhas ao listar iFrames
+    }
+
+    // Fallback: se TreeWalker retornar pouco texto e houver Shadow DOM, realiza varredura profunda
+    if (rawText.trim().length < 50) {
+      const deepText = getDeepText(rootElement);
+      if (deepText.trim().length > rawText.trim().length) {
+        rawText = deepText;
+      }
+    }
+
+    return rawText.replace(/\s+/g, ' ').trim();
+  }
+
+  // Tenta extração imediata
+  let currentText = getSnapshotText();
+  if (currentText.length >= 100) {
+    return currentText;
+  }
+
+  // Polling dinâmico para SPAs (React/Vue/Angular) que carregam dados via AJAX/Fetch
+  return new Promise((resolve) => {
+    let attempts = 0;
+    const maxAttempts = 6; // 6 x 500ms = 3 segundos
+    const interval = setInterval(() => {
+      attempts++;
+      const newText = getSnapshotText();
+      if (newText.length >= 100 || attempts >= maxAttempts) {
+        clearInterval(interval);
+        resolve(newText.length > currentText.length ? newText : currentText);
+      }
+    }, 500);
+  });
 }
 
 // T4: Bloqueia/desbloqueia UI durante processamento
@@ -1339,43 +1522,57 @@ async function processarRequisicao() {
       throw new Error("Não foi possível acessar a aba ativa.");
     }
 
-    // 4. Executar injeção no DOM da aba ativa (se não for página protegida do Chrome)
+    // Exibe o indicador visual de carregamento/leitura da página no HTML
+    if (pageReadingIndicator) {
+      pageReadingIndicator.classList.remove('hidden');
+      if (pageReadingText) pageReadingText.textContent = "Lendo e aguardando renderização da página ativa...";
+    }
+
+    // 4. Executar injeção no DOM da aba ativa com allFrames: true para capturar iFrames e SPAs
     let pageContentRaw = "";
-    const isProtectedChromePage = tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://');
+    const isProtectedChromePage = tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://') || tab.url?.startsWith('about:');
 
     if (!isProtectedChromePage) {
       try {
         const injectionResults = await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
+          target: { tabId: tab.id, allFrames: true },
           func: extractCleanDOMText
         });
-        pageContentRaw = injectionResults[0]?.result || "";
+
+        // Agrupa os resultados do frame principal e de eventuais iFrames
+        if (injectionResults && injectionResults.length > 0) {
+          const frameTexts = injectionResults
+            .map(r => r.result)
+            .filter(txt => txt && txt.trim().length > 0);
+          
+          if (frameTexts.length > 1) {
+            pageContentRaw = frameTexts.join("\n\n--- [CONTEÚDO EXTRAÍDO DE IFRAME / QUADRO ADICIONAL] ---\n\n");
+          } else {
+            pageContentRaw = frameTexts[0] || "";
+          }
+        }
       } catch (err) {
         console.warn("Aviso ao extrair DOM da página:", err);
       }
     }
 
-    if (isProtectedChromePage) {
-      pageInfoBadge.textContent = "Aba de sistema (foco nos anexos)";
-    } else if (!pageContentRaw) {
-      pageInfoBadge.textContent = "Sem texto extraído da página";
-    } else {
-      pageInfoBadge.textContent = `${Math.min(pageContentRaw.length, MAX_PAGE_CHARS)} chars lidos da página`;
-    }
+    // 5. Diagnóstico de Restrição de Acesso da Página
+    const accessStatus = detectPageAccessStatus(tab, pageContentRaw);
+    pageInfoBadge.textContent = accessStatus.badgeText;
 
-    // Se a aba for protegida do Chrome E o usuário NÃO tiver enviado nem texto nem anexos, emite o erro informativo
-    if (isProtectedChromePage && !userInput && currentAttachedFiles.length === 0) {
-      throw new Error("Páginas internas do Chrome (chrome://) não permitem injeção de scripts. Para fazer uma consulta nesta aba, digite sua pergunta ou anexe um arquivo.");
-    }
-
-    // 5. Truncamento Seguro
+    // 6. Truncamento Seguro e Montagem dos Prompts
     const pageContentTruncated = pageContentRaw.slice(0, MAX_PAGE_CHARS);
 
-    // 6. Montar conteúdo dos arquivos anexados manualmente pelo usuário
     let attachedContentText = "";
     if (currentAttachedFiles.length > 0) {
       attachedContentText = "\n\n[ARQUIVOS ANEXADOS PELO USUÁRIO PARA ANÁLISE]:\n" +
         currentAttachedFiles.map(f => `--- INÍCIO DO ARQUIVO: ${f.name} ---\n${f.content}\n--- FIM DO ARQUIVO: ${f.name} ---`).join("\n\n");
+    }
+
+    // Passa o conteúdo lido (mesmo que parco/escasso) com dados de diagnóstico para que a IA possa auditar o que foi lido
+    let pageContextNote = pageContentTruncated || "Nenhum texto extraído da página.";
+    if (accessStatus.restricted) {
+      pageContextNote = `[DIAGNÓSTICO DE LEITURA DA PÁGINA ATIVA - ABA: ${tab.url || 'Webapp'}]\n- Status de Acesso: Restrito/Escasso (${accessStatus.badgeText})\n- Caracteres lidos: ${pageContentRaw.length}\n- CONTEÚDO BRUTO EXTRAÍDO DO DOM:\n"""\n${pageContentTruncated}\n"""\n\n[INSTRUÇÃO PARA A IA]: Analise o conteúdo bruto extraído acima para responder ao usuário. Identifique o que foi lido com sucesso e o que não foi capturado.`;
     }
 
     // 7. Montagem do Prompt Consolidado e Chamada via Google Apps Script Proxy Gateway
@@ -1392,7 +1589,7 @@ async function processarRequisicao() {
     const activeSession = chat_sessions.find(s => s.id === activeChatId);
     const historyMessages = (activeSession?.messages || []).slice(-MAX_HISTORY_TURNS);
 
-    const systemInstructionText = `[DIRETRIZ DA SKILL / SYSTEM INSTRUCTION]:\n${currentSkill.systemPrompt}\n\n${STRICT_DOCUMENT_SCOPE_PROMPT}\n\n[BASE DE CONHECIMENTO - CONTEÚDO EXTRAÍDO DA PÁGINA ATUAL]:\n${pageContentTruncated || "Nenhum texto extraído."}${attachedContentText}`;
+    const systemInstructionText = `[DIRETRIZ DA SKILL / SYSTEM INSTRUCTION]:\n${currentSkill.systemPrompt}\n\n${STRICT_DOCUMENT_SCOPE_PROMPT}\n\n[BASE DE CONHECIMENTO - CONTEÚDO EXTRAÍDO DA PÁGINA ATUAL]:\n${pageContextNote}${attachedContentText}`;
 
     const historyTurns = historyMessages.map(msg => ({
       role: msg.type.includes('user-msg') ? 'user' : 'model',
@@ -1450,6 +1647,7 @@ async function processarRequisicao() {
     appendMessageUI(`❌ **Falha na operação:** ${error.message}`, 'ai-msg', false);
     console.error("Gemini Sidepanel Error:", error);
   } finally {
+    if (pageReadingIndicator) pageReadingIndicator.classList.add('hidden');
     setUiBusy(false);
   }
 }

@@ -1,9 +1,14 @@
 // Background Service Worker (Manifest V3)
-// Define abertura do Side Panel ao clicar no ícone da extensão na barra do Chrome
+// Gerencia eventos globais da extensão Assistente do Jorge
 
 chrome.runtime.onInstalled.addListener(() => {
-  if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
-    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
-      .catch((error) => console.error("Erro ao configurar comportamento do Side Panel:", error));
+  console.log('[Background ServiceWorker] Extensão Assistente do Jorge instalada com sucesso.');
+});
+
+// Listener global para gerenciar erros não capturados na comunicação
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'PING') {
+    sendResponse({ status: 'PONG' });
+    return true;
   }
 });

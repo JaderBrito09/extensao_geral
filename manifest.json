@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Assistente do Jorge",
-  "version": "1.2.0",
-  "description": "Assistente analítico inteligente baseado em IA, com carregamento de Skills em Markdown e leitura automática de páginas e arquivos.",
+  "version": "1.2.1",
+  "description": "Assistente analítico inteligente baseado em IA, com extração universal de arquivos/downloads em páginas web.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -29,7 +29,16 @@
   "background": {
     "service_worker": "background.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
   "action": {
+    "default_popup": "popup.html",
     "default_title": "Abrir Assistente do Jorge",
     "default_icon": {
       "16": "icons/icon16.png",
@@ -41,4 +50,3 @@
     "default_path": "sidepanel.html"
   }
 }
-

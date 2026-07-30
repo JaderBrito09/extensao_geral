@@ -5,7 +5,7 @@ Este guia orienta o processo de publicação da extensão **Assistente do Jorge*
 ---
 
 ## 📋 Pré-requisitos
-1. **Arquivo `.zip` de Produção**: [`assistente-jorge-extension-v1.0.0.zip`](file:///Users/jader/Meu%20Drive/extensao_geral/assistente-jorge-extension-v1.0.0.zip) gerado na raiz do projeto.
+1. **Arquivo `.zip` de Produção**: [`assistente-jorge-extension-v1.2.1.zip`](file:///Users/jader/Meu%20Drive/extensao_geral/assistente-jorge-extension-v1.2.1.zip) gerado na raiz do projeto.
 2. **Conta de Desenvolvedor Chrome**: Registro único no [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole) (taxa de cadastro única do Google de US$ 5).
 3. **Conta GCP e OAuth**: ID da extensão configurado nas credenciais de OAuth do Google Cloud Console.
 
@@ -19,7 +19,7 @@ Este guia orienta o processo de publicação da extensão **Assistente do Jorge*
 
 ### Passo 2: Enviar o Pacote `.zip`
 1. Clique no botão **+ Adicionar novo item** (Add new item).
-2. Arraste ou selecione o arquivo `assistente-jorge-extension-v1.0.0.zip`.
+2. Arraste ou selecione o arquivo `assistente-jorge-extension-v1.2.1.zip`.
 3. Aguarde o upload e o processamento inicial do manifesto.
 
 ### Passo 3: Configurar a Visibilidade (Restrita / Não Listada)
