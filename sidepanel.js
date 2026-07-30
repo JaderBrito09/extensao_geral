@@ -494,13 +494,13 @@ async function validarUsuarioNaPlanilha(email) {
     // Normaliza a lista de skills permitidas retornada pelo backend
     const allowedSkills = Array.isArray(data.allowed_skills) && data.allowed_skills.length > 0
       ? data.allowed_skills.map(s => s.trim().toUpperCase()).filter(Boolean)
-      : ["ALL"];
+      : ["SKILL-GERAL-001"];
 
     return { authorized: true, allowed_skills: allowedSkills };
   } catch (err) {
     console.warn("Aviso na validação de permissão:", err);
-    // Em modo offline/dev fallback
-    return { authorized: true, allowed_skills: ["ALL"] };
+    // Em modo offline/dev fallback libera apenas a skill geral por padrão
+    return { authorized: true, allowed_skills: ["SKILL-GERAL-001"] };
   }
 }
 
@@ -739,6 +739,10 @@ async function iniciarNovaConversa(shouldNotify = true) {
   const { chat_sessions = [] } = await chrome.storage.local.get('chat_sessions');
   chat_sessions.unshift(newSession);
   await chrome.storage.local.set({ chat_sessions, active_chat_id: activeChatId });
+
+  if (currentUser && currentUser.allowed_skills) {
+    popularSelectSkills(currentUser.allowed_skills);
+  }
 
   if (historyDrawer) historyDrawer.classList.add('hidden');
   scrollToBottom();
