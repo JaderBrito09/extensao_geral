@@ -390,6 +390,8 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
         console.warn("Aviso na leitura do manifesto local de fallback:", e);
       }
     }
+  } catch (err) {
+    console.warn("Aviso: Carregamento dinâmico de skills usou o conjunto local de fallback.", err);
   }
 
   exibirCardSelecaoHabilidadeNoChat(allowedSkills);
