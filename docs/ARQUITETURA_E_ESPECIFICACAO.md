@@ -14,9 +14,10 @@ O **Assistente do Jorge** é uma extensão de navegador (Chrome Manifest V3) pro
 3. **Anexos e Documentos**: Processamento e consolidação textual de arquivos enviados pelo usuário ou detectados na página.
 4. **Habilidades Especialistas**: Injeção dinâmica de *System Instructions* via arquivos Markdown no GitHub.
 
-### 🔗 Repositórios do GitHub
-* **Extensão e Código-Fonte**: [`https://github.com/JaderBrito09/extensao_geral`](https://github.com/JaderBrito09/extensao_geral)
-* **Catálogo e Habilidades (Skills)**: [`https://github.com/JaderBrito09/assistente-jorge-skills`](https://github.com/JaderBrito09/assistente-jorge-skills) (Raw endpoint: `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/`)
+### 🔗 Repositórios e Sub-projetos
+* **Projeto 1 — Extensão e Código-Fonte**: Pasta local `/Users/jader/Meu Drive/extensao_geral` | Repositório [`https://github.com/JaderBrito09/extensao_geral`](https://github.com/JaderBrito09/extensao_geral)
+* **Projeto 2 (Sub-projeto) — Catálogo e Habilidades (Skills)**: Pasta local `/Users/jader/Meu Drive/skill_extensao` | Repositório [`https://github.com/JaderBrito09/assistente-jorge-skills`](https://github.com/JaderBrito09/assistente-jorge-skills) (Raw endpoint: `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/`)
+
 
 ---
 

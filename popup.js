@@ -47,17 +47,20 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('[Popup] Execução de script multi-frame (aviso):', err.message);
       });
 
-      // Envia a mensagem para todos os frames da guia ativa
-      chrome.tabs.sendMessage(tab.id, { action: 'ACTION_SCAN_DOWNLOADS' }, { frameId: undefined }, (response) => {
+      // Envia mensagem única para escanear a página
+      chrome.tabs.sendMessage(tab.id, { action: 'ACTION_SCAN_DOWNLOADS' }, (response) => {
         loadingSpinnerEl.classList.add('hidden');
 
-        // Se chrome.tabs.sendMessage for respondido por múltiplos frames ou via fallback
         if (chrome.runtime.lastError) {
           console.warn('[Popup] Aviso de comunicação:', chrome.runtime.lastError.message);
         }
 
-        // Caso haja falha direta, faz o retry direcionado
-        fetchDownloadsFromTab(tab.id);
+        if (response && response.success && Array.isArray(response.downloads) && response.downloads.length > 0) {
+          renderDownloadList(response.downloads, tab.id);
+        } else {
+          emptyStateEl.classList.remove('hidden');
+          fileCounterEl.textContent = '0 arquivos encontrados';
+        }
       });
     } catch (err) {
       loadingSpinnerEl.classList.add('hidden');
@@ -66,19 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('[Popup] Falha ao escanear página:', err);
       showStatusToast(`Falha ao escanear: ${err.message}`, true);
     }
-  }
-
-  function fetchDownloadsFromTab(tabId) {
-    chrome.tabs.sendMessage(tabId, { action: 'ACTION_SCAN_DOWNLOADS' }, (response) => {
-      loadingSpinnerEl.classList.add('hidden');
-
-      if (response && response.success && Array.isArray(response.downloads) && response.downloads.length > 0) {
-        renderDownloadList(response.downloads, tabId);
-      } else {
-        emptyStateEl.classList.remove('hidden');
-        fileCounterEl.textContent = '0 arquivos encontrados';
-      }
-    });
   }
 
   function renderDownloadList(downloads, tabId) {

@@ -33,7 +33,6 @@ const STRICT_DOCUMENT_SCOPE_PROMPT = `
 // DOM Element References
 const sendBtn = document.getElementById('send-btn');
 const userInputEl = document.getElementById('user-input');
-const selectEl = document.getElementById('task-select');
 const historyEl = document.getElementById('chat-history');
 const clearHistoryBtn = document.getElementById('clear-history-btn');
 const pageInfoBadge = document.getElementById('page-info-badge');
@@ -164,18 +163,17 @@ if (optInsertLink) {
 fileInput.addEventListener('change', handleFileSelection);
 downloadAllBtn.addEventListener('click', baixarTodosArquivos);
 
-// Monitorar troca de abas para atualizar lista de arquivos da página
+// Monitorar troca de abas com debounce para evitar injeções desnecessárias no DOM
 if (typeof chrome !== 'undefined' && chrome.tabs) {
-  chrome.tabs.onActivated?.addListener(carregarArquivosPagina);
-  chrome.tabs.onUpdated?.addListener((tabId, changeInfo) => {
-    if (changeInfo.status === 'complete') carregarArquivosPagina();
-  });
-}
+  let tabUpdateTimeout = null;
+  const debouncedCarregarArquivos = () => {
+    if (tabUpdateTimeout) clearTimeout(tabUpdateTimeout);
+    tabUpdateTimeout = setTimeout(carregarArquivosPagina, 300);
+  };
 
-// Listener para exibição de orientação ao alterar a Habilidade selecionada
-if (selectEl) {
-  selectEl.addEventListener('change', async () => {
-    await exibirOrientacaoSkillSelecionada();
+  chrome.tabs.onActivated?.addListener(debouncedCarregarArquivos);
+  chrome.tabs.onUpdated?.addListener((tabId, changeInfo) => {
+    if (changeInfo.status === 'complete') debouncedCarregarArquivos();
   });
 }
 
@@ -183,12 +181,11 @@ if (selectEl) {
  * Exibe a orientação inicial (User Guidance) no chat para a skill selecionada no dropdown
  */
 async function exibirOrientacaoSkillSelecionada() {
-  if (!selectEl) return;
   renderPageFilesUI();
 
-  const selectedKey = selectEl.value;
+  const selectedKey = activeSkillKey;
   if (!selectedKey) {
-    appendMessageUI('⚠️ **Nenhuma Habilidade selecionada.**\nPor favor, selecione uma Habilidade no menu superior para orientar a análise do assistente.', 'ai-msg', false);
+    appendMessageUI('⚠️ **Nenhuma Habilidade selecionada.**\nPor favor, selecione uma Habilidade nas opções acimas para orientar a análise do assistente.', 'ai-msg', false);
     return;
   }
 
@@ -206,8 +203,99 @@ async function exibirOrientacaoSkillSelecionada() {
   }
 }
 
+const SKILLS_CACHE_TTL_MS = 3600 * 1000; // Cache TTL de 1 hora
+
+// State - Referências textuais da Habilidade selecionada em memória
+let currentSkillReferences = "";
+// State - Templates (.json e .md) da Habilidade selecionada em memória
+let currentSkillTemplates = "";
+
 /**
- * Busca uma skill específica no GitHub com suporte a fallback e cache local
+ * Busca e consolida em paralelo todas as referências associadas à Habilidade ativa (references/ do skills.json)
+ */
+async function carregarReferenciasSkill(referencesList = []) {
+  currentSkillReferences = "";
+  if (!referencesList || !Array.isArray(referencesList) || referencesList.length === 0) {
+    return;
+  }
+
+  try {
+    const fetchPromises = referencesList.map(async (refPath) => {
+      // 1. Tenta buscar no repositório remoto do GitHub
+      const rawRefUrl = `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/${refPath}`;
+      let resp = await fetch(rawRefUrl);
+
+      // 2. Fallback para a pasta local da extensão (skills-repo/)
+      if (!resp.ok) {
+        const localPath = 'skills-repo/' + refPath;
+        const localRefUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
+          ? chrome.runtime.getURL(localPath) 
+          : './' + localPath;
+        resp = await fetch(localRefUrl);
+      }
+
+      if (resp.ok) {
+        const text = await resp.text();
+        const refName = refPath.replace(/^.*[\\\/]/, '');
+        return `--- INÍCIO REFERÊNCIA: ${refName} (${refPath}) ---\n${text.trim()}\n--- FIM REFERÊNCIA: ${refName} ---`;
+      }
+      return null;
+    });
+
+    const results = await Promise.all(fetchPromises);
+    const validContents = results.filter(Boolean);
+    if (validContents.length > 0) {
+      currentSkillReferences = validContents.join("\n\n");
+    }
+  } catch (err) {
+    console.warn("Aviso ao carregar referências da habilidade:", err);
+  }
+}
+
+/**
+ * Busca e consolida em paralelo todos os templates (.json/.md) associados à Habilidade ativa (templates/ do skills.json)
+ */
+async function carregarTemplatesSkill(templatesList = []) {
+  currentSkillTemplates = "";
+  if (!templatesList || !Array.isArray(templatesList) || templatesList.length === 0) {
+    return;
+  }
+
+  try {
+    const fetchPromises = templatesList.map(async (tplPath) => {
+      // 1. Tenta buscar no repositório remoto do GitHub
+      const rawTplUrl = `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/${tplPath}`;
+      let resp = await fetch(rawTplUrl);
+
+      // 2. Fallback para a pasta local da extensão (skills-repo/)
+      if (!resp.ok) {
+        const localPath = 'skills-repo/' + tplPath;
+        const localTplUrl = (typeof chrome !== 'undefined' && chrome.runtime?.getURL) 
+          ? chrome.runtime.getURL(localPath) 
+          : './' + localPath;
+        resp = await fetch(localTplUrl);
+      }
+
+      if (resp.ok) {
+        const text = await resp.text();
+        const tplName = tplPath.replace(/^.*[\\\/]/, '');
+        return `--- INÍCIO TEMPLATE: ${tplName} (${tplPath}) ---\n${text.trim()}\n--- FIM TEMPLATE: ${tplName} ---`;
+      }
+      return null;
+    });
+
+    const results = await Promise.all(fetchPromises);
+    const validContents = results.filter(Boolean);
+    if (validContents.length > 0) {
+      currentSkillTemplates = validContents.join("\n\n");
+    }
+  } catch (err) {
+    console.warn("Aviso ao carregar templates da habilidade:", err);
+  }
+}
+
+/**
+ * Busca uma skill específica no GitHub com suporte a fallback e cache local com TTL
  */
 async function buscarSkillNoGithub(skillKey) {
   if (!skillKey) return null;
@@ -217,6 +305,14 @@ async function buscarSkillNoGithub(skillKey) {
   }
 
   try {
+    const { cached_skills = {}, skills_cache_timestamp = 0 } = await chrome.storage.local.get(['cached_skills', 'skills_cache_timestamp']);
+    const isCacheValid = (Date.now() - skills_cache_timestamp) < SKILLS_CACHE_TTL_MS;
+
+    if (isCacheValid && cached_skills[skillKey] && cached_skills[skillKey].systemPrompt) {
+      skillsConfig[skillKey] = cached_skills[skillKey];
+      return cached_skills[skillKey];
+    }
+
     let url = `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/skills/${skillKey}/SKILL.md`;
     let resp = await fetch(url);
     if (!resp.ok) {
@@ -229,7 +325,6 @@ async function buscarSkillNoGithub(skillKey) {
       const parsedSkill = parseSkillMarkdown(mdText, skillKey);
       skillsConfig[skillKey] = parsedSkill;
 
-      const { cached_skills = {} } = await chrome.storage.local.get('cached_skills');
       cached_skills[skillKey] = parsedSkill;
       await chrome.storage.local.set({ cached_skills, skills_cache_timestamp: Date.now() });
 
@@ -241,8 +336,6 @@ async function buscarSkillNoGithub(skillKey) {
 
   return skillsConfig[skillKey] || null;
 }
-
-const SKILLS_CACHE_TTL_MS = 3600 * 1000; // Cache TTL de 1 hora (Sprint 21)
 
 /**
  * Função para parsear o conteúdo Markdown (.md) das Habilidades
@@ -313,6 +406,8 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
       if (catalogData && catalogData.skills && Array.isArray(catalogData.skills)) {
         for (const item of catalogData.skills) {
           const skillId = item.id || item.slug || item.file.replace(/^.*[\\\/]/, '').replace('.md', '');
+          const skillReferences = Array.isArray(item.references) ? item.references : [];
+          const skillTemplates = Array.isArray(item.templates) ? item.templates : [];
 
           // 1. Consulta primeiro no repositório público de produção do GitHub (assistente-jorge-skills)
           const rawMdUrl = `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/${item.file}`;
@@ -334,6 +429,8 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
             parsed.slug = item.slug || skillId;
             parsed.label = item.name || parsed.label || skillId;
             parsed.category = item.category || parsed.category || "Geral";
+            parsed.references = skillReferences;
+            parsed.templates = skillTemplates;
             downloadedSkills[skillId] = parsed;
           } else {
             // Se o arquivo .md ainda não existir remotamente/localmente, registra a skill usando os metadados do manifesto
@@ -344,7 +441,9 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
               category: item.category || "Geral",
               description: item.name || "",
               userGuidance: `💡 **${item.name}:** Habilidade pronta para uso.`,
-              systemPrompt: `Atue como um assistente especializado na habilidade ${item.name}.`
+              systemPrompt: `Atue como um assistente especializado na habilidade ${item.name}.`,
+              references: skillReferences,
+              templates: skillTemplates
             };
           }
         }
@@ -382,6 +481,7 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
               parsed.slug = firstItem.slug || skillId;
               parsed.label = firstItem.name || parsed.label || skillId;
               parsed.category = firstItem.category || parsed.category || "Geral";
+              parsed.references = Array.isArray(firstItem.references) ? firstItem.references : [];
               skillsConfig[skillId] = parsed;
             }
           }
@@ -493,12 +593,27 @@ function renderizarCardSelecaoSkill(containerEl, dadosPrompt) {
 let activeSkillKey = null;
 
 /**
- * Executa o Item 4: Busca a skill no GitHub, define como ativa e imprime a orientação inicial
+ * Executa o Item 4: Busca a skill no GitHub, carrega suas referências paralelas em memória, define como ativa e imprime a orientação inicial
  */
 async function ativarHabilidadeSelecionada(skillKey) {
   activeSkillKey = skillKey;
 
   const skill = await buscarSkillNoGithub(skillKey);
+  
+  // Carrega assincronamente as referências auxiliares da skill (references/ do skills.json)
+  if (skill && skill.references && skill.references.length > 0) {
+    await carregarReferenciasSkill(skill.references);
+  } else {
+    currentSkillReferences = "";
+  }
+
+  // Carrega assincronamente os templates auxiliares da skill (templates/ do skills.json)
+  if (skill && skill.templates && skill.templates.length > 0) {
+    await carregarTemplatesSkill(skill.templates);
+  } else {
+    currentSkillTemplates = "";
+  }
+
   if (skill && skill.userGuidance) {
     appendMessageUI(`💡 **Habilidade Selecionada: ${skill.label}**\n\n${skill.userGuidance}`, 'ai-msg', false);
   } else if (skill) {
@@ -1077,13 +1192,13 @@ function renderPageFilesUI() {
     return;
   }
 
-  const hasSkillSelected = Boolean(selectEl && selectEl.value);
+  const hasSkillSelected = Boolean(activeSkillKey);
   pageFilesCount.textContent = detectedPageFiles.length;
   pageFilesPanel.classList.remove('hidden');
 
   if (downloadAllBtn) {
     downloadAllBtn.disabled = !hasSkillSelected;
-    downloadAllBtn.title = hasSkillSelected ? "Baixar todos os arquivos da página" : "Selecione uma Habilidade no menu superior para habilitar os downloads";
+    downloadAllBtn.title = hasSkillSelected ? "Baixar todos os arquivos da página" : "Selecione uma Habilidade no chat para habilitar os downloads";
   }
 
   detectedPageFiles.forEach((file) => {
@@ -1099,10 +1214,10 @@ function renderPageFilesUI() {
     dlBtn.className = 'download-file-btn';
     dlBtn.innerHTML = '⬇️';
     dlBtn.disabled = !hasSkillSelected;
-    dlBtn.title = hasSkillSelected ? `Baixar ${file.name}` : "Selecione uma Habilidade no menu superior para habilitar o download";
+    dlBtn.title = hasSkillSelected ? `Baixar ${file.name}` : "Selecione uma Habilidade no chat para habilitar o download";
     dlBtn.addEventListener('click', () => {
-      if (!selectEl || !selectEl.value) {
-        appendMessageUI('⚠️ **Nenhuma Habilidade selecionada.**\nPor favor, selecione uma Habilidade no menu superior para habilitar o download de arquivos.', 'ai-msg', false);
+      if (!activeSkillKey) {
+        appendMessageUI('⚠️ **Nenhuma Habilidade selecionada.**\nPor favor, selecione uma Habilidade nas opções do chat para habilitar o download de arquivos.', 'ai-msg', false);
         return;
       }
       baixarArquivoUnitario(file);
@@ -1238,8 +1353,8 @@ async function baixarArquivoUnitario(file) {
 }
 
 function baixarTodosArquivos() {
-  if (!selectEl || !selectEl.value) {
-    appendMessageUI('⚠️ **Nenhuma Habilidade selecionada.**\nPor favor, selecione uma Habilidade no menu superior para habilitar o download de arquivos.', 'ai-msg', false);
+  if (!activeSkillKey) {
+    appendMessageUI('⚠️ **Nenhuma Habilidade selecionada.**\nPor favor, selecione uma Habilidade nas opções do chat para habilitar o download de arquivos.', 'ai-msg', false);
     return;
   }
   if (!detectedPageFiles || detectedPageFiles.length === 0) return;
@@ -1600,7 +1715,7 @@ function setUiBusy(busy) {
 // Main Processing Workflow
 async function processarRequisicao() {
   const userInput = userInputEl.value.trim();
-  const selectedSkillKey = activeSkillKey || (selectEl ? selectEl.value : null);
+  const selectedSkillKey = activeSkillKey;
 
   if (!userInput && attachedFiles.length === 0) return;
 
@@ -1669,19 +1784,19 @@ async function processarRequisicao() {
     const accessStatus = detectPageAccessStatus(tab, pageContentRaw);
     pageInfoBadge.textContent = accessStatus.badgeText;
 
-    // 6. Truncamento Seguro e Montagem dos Prompts
+    // 6. Truncamento Seguro e Montagem dos Prompts com Tags Semânticas XML
     const pageContentTruncated = pageContentRaw.slice(0, MAX_PAGE_CHARS);
 
-    let attachedContentText = "";
+    let attachedFilesXml = "Nenhum arquivo anexado.";
     if (currentAttachedFiles.length > 0) {
-      attachedContentText = "\n\n[ARQUIVOS ANEXADOS PELO USUÁRIO PARA ANÁLISE]:\n" +
-        currentAttachedFiles.map(f => `--- INÍCIO DO ARQUIVO: ${f.name} ---\n${f.content}\n--- FIM DO ARQUIVO: ${f.name} ---`).join("\n\n");
+      attachedFilesXml = currentAttachedFiles.map(f => 
+        `  <arquivo nome="${f.name}" tipo="${f.type}">\n${f.content}\n  </arquivo>`
+      ).join("\n");
     }
 
-    // Passa o conteúdo lido (mesmo que parco/escasso) com dados de diagnóstico para que a IA possa auditar o que foi lido
-    let pageContextNote = pageContentTruncated || "Nenhum texto extraído da página.";
+    let pageContextContent = pageContentTruncated || "Nenhum texto extraído da página.";
     if (accessStatus.restricted) {
-      pageContextNote = `[DIAGNÓSTICO DE LEITURA DA PÁGINA ATIVA - ABA: ${tab.url || 'Webapp'}]\n- Status de Acesso: Restrito/Escasso (${accessStatus.badgeText})\n- Caracteres lidos: ${pageContentRaw.length}\n- CONTEÚDO BRUTO EXTRAÍDO DO DOM:\n"""\n${pageContentTruncated}\n"""\n\n[INSTRUÇÃO PARA A IA]: Analise o conteúdo bruto extraído acima para responder ao usuário. Identifique o que foi lido com sucesso e o que não foi capturado.`;
+      pageContextContent = `[DIAGNÓSTICO DE LEITURA DA PÁGINA ATIVA - ABA: ${tab.url || 'Webapp'}]\n- Status de Acesso: Restrito/Escasso (${accessStatus.badgeText})\n- Caracteres lidos: ${pageContentRaw.length}\n- CONTEÚDO BRUTO EXTRAÍDO DO DOM:\n"""\n${pageContentTruncated}\n"""\n\n[INSTRUÇÃO PARA A IA]: Analise o conteúdo bruto extraído acima para responder ao usuário. Identifique o que foi lido com sucesso e o que não foi capturado.`;
     }
 
     // 7. Montagem do Prompt Consolidado e Chamada via Google Apps Script Proxy Gateway
@@ -1698,14 +1813,34 @@ async function processarRequisicao() {
     const activeSession = chat_sessions.find(s => s.id === activeChatId);
     const historyMessages = (activeSession?.messages || []).slice(-MAX_HISTORY_TURNS);
 
-    const systemInstructionText = `[DIRETRIZ DA SKILL / SYSTEM INSTRUCTION]:\n${currentSkill.systemPrompt}\n\n${STRICT_DOCUMENT_SCOPE_PROMPT}\n\n[BASE DE CONHECIMENTO - CONTEÚDO EXTRAÍDO DA PÁGINA ATUAL]:\n${pageContextNote}${attachedContentText}`;
+    const systemInstructionText = `[DIRETRIZ DA SKILL / SYSTEM INSTRUCTION]:\n${currentSkill.systemPrompt}\n\n${STRICT_DOCUMENT_SCOPE_PROMPT}`;
+
+    const formattedXmlPayload = `<regras_e_referencias>
+${currentSkillReferences || "Nenhuma referência adicional vinculada."}
+</regras_e_referencias>
+
+<templates_disponiveis>
+${currentSkillTemplates || "Nenhum template adicional vinculado."}
+</templates_disponiveis>
+
+<conteudo_pagina url="${tab.url || ''}">
+${pageContextContent}
+</conteudo_pagina>
+
+<documentos_anexados>
+${attachedFilesXml}
+</documentos_anexados>
+
+<mensagem_usuario>
+${userInput || "Por favor, analise a página ativa e os documentos anexados."}
+</mensagem_usuario>`;
 
     const historyTurns = historyMessages.map(msg => ({
       role: msg.type.includes('user-msg') ? 'user' : 'model',
       parts: [{ text: msg.text }]
     }));
 
-    const currentTurn = { role: 'user', parts: [{ text: userInput || "Por favor, analise o(s) arquivo(s) anexado(s) em conjunto com a página." }] };
+    const currentTurn = { role: 'user', parts: [{ text: formattedXmlPayload }] };
 
     const contents = [...historyTurns, currentTurn];
 
@@ -1877,11 +2012,23 @@ function renderizarCardInterativo(containerEl, dadosPrompt) {
       });
       btn.classList.add('selected');
 
-      // Preenche o input e envia a resposta selecionada
-      const textoParaEnviar = opcao.value || opcao.label || opcao.text;
-      if (userInputEl) {
-        userInputEl.value = textoParaEnviar;
-        processarRequisicao();
+      // Se a opção solicitar upload/anexo de arquivos diretamente
+      if (opcao.action === 'upload_file' || opcao.action === 'attach_file') {
+        if (fileInput) {
+          if (opcao.accept) {
+            fileInput.setAttribute('accept', opcao.accept);
+          } else {
+            fileInput.removeAttribute('accept');
+          }
+          fileInput.click();
+        }
+      } else {
+        // Preenche o input e envia a resposta selecionada
+        const textoParaEnviar = opcao.value || opcao.label || opcao.text;
+        if (userInputEl) {
+          userInputEl.value = textoParaEnviar;
+          processarRequisicao();
+        }
       }
     });
 

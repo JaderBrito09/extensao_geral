@@ -5,10 +5,8 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log('[Background ServiceWorker] Extensão Assistente do Jorge instalada com sucesso.');
 });
 
-// Listener global para gerenciar erros não capturados na comunicação
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'PING') {
-    sendResponse({ status: 'PONG' });
-    return true;
-  }
-});
+// Configura o comportamento do SidePanel no Chrome (abre ao clicar no ícone da extensão se ativado)
+if (typeof chrome !== 'undefined' && chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+    .catch((err) => console.warn('[Background] Aviso ao configurar sidePanel behavior:', err));
+}

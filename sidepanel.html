@@ -51,17 +51,20 @@
     <!-- Header com Perfil do Usuário e Ações -->
     <header class="app-header">
       <div class="header-main">
-      <div class="logo-area">
-        <img src="icons/icon48.png" alt="Logo" class="header-avatar-logo">
-        <span class="header-title">Assistente do Jorge</span>
+        <div class="logo-area">
+          <img src="icons/icon48.png" id="user-avatar" alt="Avatar do Usuário" class="header-avatar-logo">
+          <div class="user-info-text">
+            <span id="user-name" class="header-title">Assistente do Jorge</span>
+            <span id="user-email" class="header-user-email hidden"></span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="new-chat-btn" class="btn-ghost btn-sm" title="Iniciar Nova Conversa" aria-label="Iniciar nova conversa">➕ Nova</button>
+          <button id="history-drawer-btn" class="btn-ghost btn-sm" title="Ver Histórico de Conversas" aria-label="Ver histórico de conversas">📜 Histórico</button>
+          <button id="google-logout-btn" class="btn-ghost btn-sm btn-logout-ghost" title="Sair da conta" aria-label="Sair da conta Google">🚪 Sair</button>
+        </div>
       </div>
-      <div class="header-actions">
-        <button id="new-chat-btn" class="btn-ghost btn-sm" title="Iniciar Nova Conversa" aria-label="Iniciar nova conversa">➕ Nova</button>
-        <button id="history-drawer-btn" class="btn-ghost btn-sm" title="Ver Histórico de Conversas" aria-label="Ver histórico de conversas">📜 Histórico</button>
-        <button id="google-logout-btn" class="btn-ghost btn-sm btn-logout-ghost" title="Sair da conta" aria-label="Sair da conta Google">🚪 Sair</button>
-      </div>
-    </div>
-  </header>
+    </header>
 
   <!-- Painel de Histórico de Conversas Retomáveis -->
   <div id="history-drawer" class="history-drawer hidden">

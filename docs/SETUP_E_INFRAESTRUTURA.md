@@ -19,20 +19,25 @@ Preencha os valores abaixo para referência da equipe de desenvolvimento:
 | **ID da Extensão (Dev Local)** | `iobhoockjdkooadefbhlolggdlikdoke` | ID provisório gerado em `chrome://extensions` |
 | **OAuth Client ID (Dev Local)** | `1030154870179-c8ri4egjl3o6hiigec84c8aou3g5lo3p.apps.googleusercontent.com` | Credencial vinculada ao desenvolvimento local |
 | **Endpoint do Apps Script Proxy** | `https://script.google.com/macros/s/AKfycbxB0r52U-lcIIZQKslhDBaROeVz-aqNmD1j1RrzUzFUDzxGJyZWwmJK8pjaARBc0u3s/exec` | URL pública do Web App no Google Apps Script |
-| **Repositório do Código-Fonte** | `JaderBrito09/extensao_geral` | Repositório exclusivo do código da extensão, Apps Script e testes |
-| **Repositório Exclusivo de Skills** | `JaderBrito09/assistente-jorge-skills` | Repositório dedicado para arquivos Markdown (`.md`) e `skills.json` |
+| **Repositório do Código-Fonte** | `JaderBrito09/extensao_geral` | Pasta local `/Users/jader/Meu Drive/extensao_geral` — Código da extensão, Apps Script e testes |
+| **Sub-projeto Exclusivo de Skills** | `JaderBrito09/assistente-jorge-skills` | Pasta local `/Users/jader/Meu Drive/skill_extensao` — Arquivos Markdown (`.md`) e `skills.json` |
 
 ---
 
-## 🐙 Arquitetura de Repositórios no GitHub
+## 🐙 Arquitetura de Repositórios e Sub-projetos
 
-Para manter a segurança e facilitar a gestão contínua de conteúdo sem a necessidade de re-compilar a extensão, o projeto utiliza **dois repositórios independentes**:
+Para manter a segurança e facilitar a gestão contínua de conteúdo sem a necessidade de re-compilar a extensão, o projeto utiliza **dois repositórios/sub-projetos independentes**:
 
-### 1. **Repositório do Código-Fonte (`JaderBrito09/extensao_geral`)**
+### 1. **Projeto 1 — Extensão e Código-Fonte (`extensao_geral`)**
+- **Pasta Local**: `/Users/jader/Meu Drive/extensao_geral`
+- **Repositório**: [`JaderBrito09/extensao_geral`](https://github.com/JaderBrito09/extensao_geral)
 - **Objetivo**: Armazenar o código da aplicação Chrome (Manifest V3), componentes de interface (`sidepanel.*`), manipuladores de eventos do navegador, servidor intermediário `apps-script/Code.gs`, testes unitários e documentação técnica.
 
-### 2. **Repositório Exclusivo de Skills (`JaderBrito09/assistente-jorge-skills`)**
-- **Objetivo**: Repositório público/dedicado onde especialistas de domínio registram e atualizam os arquivos Markdown (`.md`) e o catálogo `skills.json`.
+### 2. **Projeto 2 — Sub-projeto Exclusivo de Skills (`skill_extensao`)**
+- **Pasta Local**: `/Users/jader/Meu Drive/skill_extensao`
+- **Repositório**: [`JaderBrito09/assistente-jorge-skills`](https://github.com/JaderBrito09/assistente-jorge-skills)
+- **Objetivo**: Sub-projeto dedicado onde especialistas de domínio registram, versionam e atualizam os arquivos Markdown (`.md`), a documentação interna em `skill_extensao/docs/` e o catálogo `skills.json`.
+
 - **Endpoints Consumidos**:  
   - Catálogo JSON: `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/skills.json`  
   - Habilidades Markdown: `https://raw.githubusercontent.com/JaderBrito09/assistente-jorge-skills/main/skills/{skillId}.md`

@@ -60,7 +60,7 @@
         // ESTRATÉGIA 2: Resolução Ancestral por .closest() em Spans/Rótulos Descendentes
         // Garante que <span class="ui-button-text">Download Anexo</span> resolva o pai <button> ou <a>
         // ---------------------------------------------------------------------
-        const labelElements = document.querySelectorAll('span, i, label, div, b, strong');
+        const labelElements = document.querySelectorAll('span, i, label, b, strong, p');
         labelElements.forEach((labelEl) => {
             const textContent = labelEl.innerText ? labelEl.innerText.trim() : '';
             
