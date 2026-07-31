@@ -54,9 +54,30 @@ Este documento reúne o planejamento de entregas do **Assistente do Jorge**, inc
   - Extrator em JS para ler o conteúdo textual dos arquivos anexados.
   - Consolidar prompt final e enviar para o Proxy Apps Script.
 
+### 🔹 US-06: Processamento Avançado de Documentos e Leitura via OCR
+* **Como** usuário anexando documentos à conversa,
+* **Quero** que arquivos PDF sejam processados por um serviço de OCR externo e que arquivos `.docx` tenham suporte nativo de leitura,
+* **Para que** eu possa enviar PDFs digitalizados/escaneados ou documentos Word com extração completa e precisa de dados para a IA.
+* **Critérios de Aceite**:
+  - Aceitar arquivos através dos 4 caminhos de anexo (Botão 📎, Drag & Drop, Links e Action Cards).
+  - Identificar arquivos `.pdf` e enviá-los via requisição API para o serviço externo de OCR, recebendo o conteúdo tratado em formato JSON.
+  - Manter a leitura direta via API em JS (`FileReader`) para arquivos de texto puro (`.txt`, `.csv`, `.json`, `.md`).
+  - Implementar parser nativo para extração de texto de arquivos Microsoft Word (`.docx`).
+  - Manter o fluxo atual de Armazenamento Temporário na UI (Chips de anexo) e Injeção de Contexto em tags XML (`<ARQUIVOS_ANEXADOS_PELO_USUARIO>`) no prompt do Gemini.
+
+### 🔹 US-07: Migração do Controle de Acesso e Permissões de Skills para o Supabase
+* **Como** administrador do sistema,
+* **Quero** gerenciar usuários e permissões de skills através de um banco de dados moderno (Supabase) com Painel Web Admin,
+* **Para que** as validações de login e carregamento de skills permitidas sejam instantâneas, sem latência e sem erros causados pela planilha do Google Sheets.
+* **Critérios de Aceite**:
+  - Tabela `users` no Supabase armazenando `email`, `status` (`ACTIVE`/`INACTIVE`), e `allowed_skills` (array de IDs).
+  - Substituição da consulta à planilha por chamada à REST API / Client do Supabase (com RLS - Row Level Security).
+  - Validação ultra-rápida de acesso no momento do login e atualização em tempo real de permissões.
+  - Painel Web Admin (ou interface do Supabase) para cadastro simples com seleção de checkboxes das skills liberadas.
+
 ---
 
-## 📅 Quadro de Acompanhamento de Sprints (1 a 12)
+## 📅 Quadro de Acompanhamento de Sprints (1 a 14)
 
 ### Sprint 1 — Fundação do Projeto e Estrutura MV3
 - `[x]` Tarefa 1: Criar arquivo `manifest.json` com Manifest V3
@@ -111,3 +132,15 @@ Este documento reúne o planejamento de entregas do **Assistente do Jorge**, inc
 - `[x]` Tarefa 28: Validação final de escopos no GCP Console (`identity`, `storage`, `tabs`, `scripting`, `sidePanel`, `downloads`)
 - `[x]` Tarefa 29: Captura de screenshots oficiais e elaboração de texto da loja
 
+### Sprint 13 — OCR de PDFs & Parser de Documentos Word (.docx)
+- `[ ]` Tarefa 30: Implementar chamada de API no `sidepanel.js` para envio de PDFs ao serviço externo de OCR e tratamento do retorno em JSON.
+- `[ ]` Tarefa 31: Integrar leitor nativo de arquivos `.docx` (extração de texto via `JSZip` / XML `word/document.xml`).
+- `[ ]` Tarefa 32: Preservar leitura direta de arquivos de texto puro (`.txt`, `.csv`, `.json`, `.md`) via `FileReader`.
+- `[ ]` Tarefa 33: Integrar pipeline de OCR ao fluxo de renderização de anexos (Chips na UI) e montagem do prompt XML (`<ARQUIVOS_ANEXADOS_PELO_USUARIO>`).
+
+### Sprint 14 — Migração de Controle de Acessos e Skills para o Supabase
+- `[ ]` Tarefa 34: Criar projeto no Supabase e estruturar a tabela `user_permissions` (`email` PRIMARY KEY, `status`, `allowed_skills` text[], `created_at`).
+- `[ ]` Tarefa 35: Configurar políticas de segurança (RLS - Row Level Security) para consulta pública das permissões via `anon_key` com escopo apenas de leitura.
+- `[ ]` Tarefa 36: Integrar cliente Supabase REST / SDK no `sidepanel.js` substituindo a verificação legada na planilha Google Sheets.
+- `[ ]` Tarefa 37: Atualizar lógica de filtragem de skills permitidas para ler o array `allowed_skills` retornado diretamente do Supabase.
+- `[ ]` Tarefa 38: Atualizar documentações (`ARQUITETURA_E_ESPECIFICACAO.md`, `MANUAL_DO_USUARIO.md` e `POLITICA_DE_PRIVACIDADE.md`) refletindo a mudança de controle da planilha para o Supabase.
