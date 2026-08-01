@@ -151,15 +151,7 @@ function validarAcessoUsuario(email) {
 
       if (rowEmail === email) {
         if (rowStatus === "ATIVO" || rowStatus === "ACTIVE" || rowStatus === "SIM" || rowStatus === "1") {
-          // Lê e normaliza a coluna "Skills Permitidas" (separada por vírgula)
-          let allowedSkills = ["ALL"];
-          if (skillsIndex !== -1) {
-            const rawSkills = data[i][skillsIndex].toString().trim();
-            if (rawSkills) {
-              allowedSkills = rawSkills.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
-            }
-          }
-          return { authorized: true, allowed_skills: allowedSkills };
+          return { authorized: true, allowed_skills: ["ALL"] };
         } else {
           return { authorized: false, message: "Sua conta está inativa na planilha de acesso." };
         }

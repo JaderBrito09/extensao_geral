@@ -4,7 +4,7 @@ let skillsConfig = {};
 const MAX_PAGE_CHARS = 30000; // Limite de caracteres para prevenção de estouro de tokens
 const MAX_HISTORY_TURNS = 10; // Número máximo de mensagens do histórico enviadas ao Gemini
 const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash'; // Modelo padrão do Gemini (facilita troca futura)
-const DEFAULT_APPS_SCRIPT_ENDPOINT = "https://script.google.com/macros/s/AKfycbxB0r52U-lcIIZQKslhDBaROeVz-aqNmD1j1RrzUzFUDzxGJyZWwmJK8pjaARBc0u3s/exec";
+const DEFAULT_APPS_SCRIPT_ENDPOINT = "https://script.google.com/macros/s/AKfycbzjrjLaSlID5FGzx5zDoIQjJCUW-5LTImg90v6us2X3v55l0e0_UodEwv70kgbQAdTq/exec";
 
 /**
  * Obtém a URL do Apps Script Proxy Gateway com migração automática de endpoints antigos
@@ -12,7 +12,7 @@ const DEFAULT_APPS_SCRIPT_ENDPOINT = "https://script.google.com/macros/s/AKfycbx
 async function getProxyEndpoint() {
   if (typeof chrome === 'undefined' || !chrome.storage) return DEFAULT_APPS_SCRIPT_ENDPOINT;
   const { apps_script_endpoint: storedEndpoint } = await chrome.storage.local.get('apps_script_endpoint');
-  if (!storedEndpoint || storedEndpoint.includes('AKfycbyLfAPyTaKvoSgl7W-OdXrfKRm1rofmRGs_ZD15RzMf1GrvTQAR6DiZrFD6SiZ8HSV4')) {
+  if (!storedEndpoint || storedEndpoint !== DEFAULT_APPS_SCRIPT_ENDPOINT) {
     await chrome.storage.local.set({ apps_script_endpoint: DEFAULT_APPS_SCRIPT_ENDPOINT });
     return DEFAULT_APPS_SCRIPT_ENDPOINT;
   }
@@ -501,6 +501,9 @@ async function carregarSkillsDinamicas(allowedSkills = ["ALL"]) {
 function exibirCardSelecaoHabilidadeNoChat(allowedSkills = ["ALL"]) {
   if (!historyEl) return;
 
+  // Evita duplicar o card interativo de seleção de habilidade se ele já estiver visível no chat
+  if (historyEl.querySelector('.interactive-prompt-card')) return;
+
   const normalizedAllowed = allowedSkills.map(s => s.trim().toUpperCase());
   const isAllAllowed = normalizedAllowed.includes("ALL") || normalizedAllowed.includes("*");
 
@@ -705,21 +708,12 @@ async function validarUsuarioNaPlanilha(email) {
       return { authorized: false, message: "Erro na validação: " + data.error };
     }
 
-    // Retorna a lista de skills enviada pela planilha. Se a coluna estiver vazia, libera a habilidade principal/geral por padrão
-    let allowedSkills = Array.isArray(data.allowed_skills)
-      ? data.allowed_skills.map(s => s.trim().toUpperCase()).filter(Boolean)
-      : [];
-
-    if (allowedSkills.length === 0) {
-      // Se não houver skills na planilha, libera por padrão a primeira skill cadastrada no manifesto (ex: SKILL-GERAL-001 ou geral)
-      allowedSkills = ["SKILL-GERAL-001", "GERAL"];
-    }
-
-    return { authorized: true, allowed_skills: allowedSkills };
+    // Usuário autorizado e com status ATIVO: concede acesso universal a todas as habilidades ("ALL")
+    return { authorized: true, allowed_skills: ["ALL"] };
   } catch (err) {
     console.warn("Aviso na validação de permissão:", err);
-    // Em caso de falha de conexão, libera a primeira skill padrão
-    return { authorized: true, allowed_skills: ["SKILL-GERAL-001", "GERAL"] };
+    // Em caso de falha de conexão ou erro no proxy, concede o acesso com fallback ["ALL"]
+    return { authorized: true, allowed_skills: ["ALL"] };
   }
 }
 
