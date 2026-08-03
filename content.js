@@ -5,7 +5,7 @@
  * - Varre a página ativa e todos os seus iframes.
  * - Localiza links diretos, botões AJAX (PrimeFaces.ab, JSF, ASP.NET WebForms) e elementos interativos.
  * - Resolve automaticamente o elemento clicável pai a partir de textos em spans descendentes
- *   (ex: <span class="ui-button-text">Download Anexo</span> -> ancestral <button> ou <a href="#">).
+ *   (ex: span class="ui-button-text" Download Anexo -> ancestral button ou a href="#").
  */
 
 (function () {
@@ -58,7 +58,7 @@
 
         // ---------------------------------------------------------------------
         // ESTRATÉGIA 2: Resolução Ancestral por .closest() em Spans/Rótulos Descendentes
-        // Garante que <span class="ui-button-text">Download Anexo</span> resolva o pai <button> ou <a>
+        // Garante que span class="ui-button-text" Download Anexo resolva o pai button ou a
         // ---------------------------------------------------------------------
         const labelElements = document.querySelectorAll('span, i, label, b, strong, p');
         labelElements.forEach((labelEl) => {
