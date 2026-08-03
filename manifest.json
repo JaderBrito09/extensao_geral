@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Assistente do Jorge",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Assistente analítico inteligente baseado em IA, com extração universal de arquivos/downloads em páginas web.",
   "icons": {
     "16": "icons/icon16.png",
@@ -18,7 +18,7 @@
     "identity"
   ],
   "oauth2": {
-    "client_id": "1030154870179-60e6j1amgkpn2apsj5i0nf6lurs58k54.apps.googleusercontent.com",
+    "client_id": "1030154870179-c8ri4egjl3o6hiigec84c8aou3g5lo3p.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/userinfo.email",
       "https://www.googleapis.com/auth/userinfo.profile"
