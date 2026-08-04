@@ -25,6 +25,7 @@ function doPost(e) {
     const promptConsolidado = data.promptConsolidado || "";
     const systemInstruction = data.systemInstruction || "";
     const model = data.model || "gemini-2.5-flash";
+    const requestedSkill = (data.requestedSkill || data.skill || "").trim();
 
     if (!userEmail) {
       return jsonResponse({ error: "E-mail do usuário não informado no payload." }, 401);
@@ -46,6 +47,30 @@ function doPost(e) {
         userEmail: userEmail,
         allowed_skills: accessCheck.allowed_skills || ["ALL"]
       }, 200);
+    }
+
+    // 2. Validar permissão da Skill solicitada na requisição de geração
+    const allowedSkills = accessCheck.allowed_skills || ["ALL"];
+    const normalizedAllowed = allowedSkills.map(s => s.trim().toUpperCase());
+    const isAllAllowed = normalizedAllowed.includes("ALL") || normalizedAllowed.includes("*") || normalizedAllowed.includes("TODAS");
+
+    if (!isAllAllowed) {
+      if (!requestedSkill) {
+        return jsonResponse({
+          error: "ACESSO_NEGADO",
+          message: "Validação de Skill falhou: nenhuma Habilidade foi informada na requisição."
+        }, 403);
+      }
+
+      const reqUpper = requestedSkill.toUpperCase();
+      const hasPermission = normalizedAllowed.includes(reqUpper);
+
+      if (!hasPermission) {
+        return jsonResponse({
+          error: "ACESSO_NEGADO",
+          message: `Acesso negado: a Habilidade '${requestedSkill}' não está autorizada para o seu usuário.`
+        }, 403);
+      }
     }
 
     // 2. Recuperar a Chave da API do Gemini das Script Properties
@@ -127,8 +152,8 @@ function validarAcessoUsuario(email) {
     }
 
     if (!sheet) {
-      // Se a planilha ainda não existir ou não estiver vinculada, permite em modo fallback/dev
-      return { authorized: true, allowed_skills: ["ALL"], message: "Modo dev: planilha não encontrada" };
+      // Se a planilha ainda não existir ou não estiver vinculada, bloqueia acesso por segurança (fail-closed)
+      return { authorized: false, message: "Planilha de permissões de usuários não encontrada." };
     }
 
     const data = sheet.getDataRange().getValues();
@@ -140,10 +165,17 @@ function validarAcessoUsuario(email) {
     const headers = data[0].map(h => h.toString().toLowerCase().trim());
     const emailIndex    = headers.indexOf("e-mail")           !== -1 ? headers.indexOf("e-mail")           : 0;
     const statusIndex   = headers.indexOf("status")           !== -1 ? headers.indexOf("status")           : 2;
-    // Aceita "skills permitidas" ou "skills_permitidas" como nome do cabeçalho
-    const skillsIndex   = headers.indexOf("skills permitidas") !== -1
-                        ? headers.indexOf("skills permitidas")
-                        : headers.indexOf("skills_permitidas");
+    
+    // Aceita variações do cabeçalho de skills permitidas
+    let skillsIndex = -1;
+    const candidateHeaders = ["skills permitidas", "skills_permitidas", "skills", "habilidades permitidas", "habilidades_permitidas"];
+    for (const cand of candidateHeaders) {
+      const idx = headers.indexOf(cand);
+      if (idx !== -1) {
+        skillsIndex = idx;
+        break;
+      }
+    }
 
     for (let i = 1; i < data.length; i++) {
       const rowEmail  = data[i][emailIndex].toString().trim().toLowerCase();
@@ -151,7 +183,21 @@ function validarAcessoUsuario(email) {
 
       if (rowEmail === email) {
         if (rowStatus === "ATIVO" || rowStatus === "ACTIVE" || rowStatus === "SIM" || rowStatus === "1") {
-          return { authorized: true, allowed_skills: ["ALL"] };
+          let allowedSkills = ["ALL"];
+          if (skillsIndex !== -1 && data[i][skillsIndex] !== undefined && data[i][skillsIndex] !== null) {
+            const rawSkillsStr = data[i][skillsIndex].toString().trim();
+            if (rawSkillsStr !== "") {
+              const parsed = rawSkillsStr.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
+              if (parsed.length > 0) {
+                const isAll = parsed.some(s => {
+                  const u = s.toUpperCase();
+                  return u === "ALL" || u === "TODAS" || u === "*";
+                });
+                allowedSkills = isAll ? ["ALL"] : parsed;
+              }
+            }
+          }
+          return { authorized: true, allowed_skills: allowedSkills };
         } else {
           return { authorized: false, message: "Sua conta está inativa na planilha de acesso." };
         }
@@ -161,9 +207,8 @@ function validarAcessoUsuario(email) {
     return { authorized: false, message: "E-mail não cadastrado na lista de acesso permitido." };
 
   } catch (err) {
-    // Em caso de falha de acesso à planilha, autoriza em fallback para não travar desenvolvimento
     console.warn("Aviso na validação de usuário:", err);
-    return { authorized: true, allowed_skills: ["ALL"], message: "Fallback por erro de leitura" };
+    return { authorized: false, message: "Erro de leitura da planilha de permissões: " + err.toString() };
   }
 }
 

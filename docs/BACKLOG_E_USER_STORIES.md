@@ -144,3 +144,12 @@ Este documento reúne o planejamento de entregas do **Assistente do Jorge**, inc
 - `[ ]` Tarefa 36: Integrar cliente Supabase REST / SDK no `sidepanel.js` substituindo a verificação legada na planilha Google Sheets.
 - `[ ]` Tarefa 37: Atualizar lógica de filtragem de skills permitidas para ler o array `allowed_skills` retornado diretamente do Supabase.
 - `[ ]` Tarefa 38: Atualizar documentações (`ARQUITETURA_E_ESPECIFICACAO.md`, `MANUAL_DO_USUARIO.md` e `POLITICA_DE_PRIVACIDADE.md`) refletindo a mudança de controle da planilha para o Supabase.
+
+### Sprint 15 — Revisões de Código, Correções de Proxy, PDF e Sincronização v7
+- `[x]` Tarefa 39 (Bloqueante): Impedir a sobrescrita indevida do endpoint do proxy na v7 com `Object.freeze` e fallback seguro para a URL oficial em `sidepanel.js`.
+- `[x]` Tarefa 40 (Bloqueante): Implementar suporte a descompactação `FlateDecode` para PDFs comprimidos e tratamento de exceção sem erros não capturados.
+- `[x]` Tarefa 41 (Bloqueante): Garantir validação obrigatória e sem bypass da coluna de skills no Apps Script (`Code.gs`) retornando 403 `ACESSO_NEGADO`.
+- `[x]` Tarefa 42: Resolver conflito de interface entre Popup e Sidepanel isolando listeners por `target` em toda a extensão.
+- `[x]` Tarefa 43: Adicionar `StorageLockManager` para evitar race conditions no storage e padronizar o envio de mensagens via iframe com helpers `JORGE_*`.
+- `[x]` Tarefa 44: Aplicar nits de código da revisão `t_bc8f044c` e manter a suíte de testes com 55 verificações aprovadas.
+

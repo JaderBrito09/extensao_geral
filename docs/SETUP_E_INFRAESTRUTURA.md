@@ -116,8 +116,8 @@ O Proxy no Google Apps Script faz a ponte segura entre a extensão Chrome e a AP
    - Ative o *Modo do desenvolvedor* no canto superior direito.
    - Clique em **Carregar sem compactação** e selecione a pasta raiz da extensão.
 4. **Gerar Pacote para Deploy na Chrome Web Store**:
-   - O arquivo de distribuição `assistente-jorge-extension-v1.2.1.zip` pode ser gerado executando na raiz do projeto:
+   - O arquivo de distribuição `assistente-jorge-extension-v7.zip` pode ser gerado executando na raiz do projeto:
      ```bash
-     zip -r assistente-jorge-extension-v1.2.1.zip manifest.json sidepanel.html sidepanel.js sidepanel.css background.js icons/ lib/ -x "*.DS_Store"
+     zip -r assistente-jorge-extension-v7.zip manifest.json sidepanel.html sidepanel.js sidepanel.css background.js icons/ lib/ -x "*.DS_Store"
      ```
 

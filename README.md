@@ -39,14 +39,17 @@ O pacote compilado é gerado como `assistente-jorge-extension-v7.zip` na raiz do
 
 ## 📚 Documentação do Projeto
 
-Toda a documentação técnica e arquitetural pública do projeto está disponível na pasta [`docs/`](docs/):
+Toda a documentação técnica, operacional e arquitetural do projeto está centralizada no [**Hub de Documentação (`docs/README.md`)**](docs/README.md):
 
 | Documento | Descrição |
 | :--- | :--- |
+| 📚 [docs/README.md](docs/README.md) | Central unificada de documentação do projeto. |
 | 📖 [MANUAL_DO_USUARIO.md](docs/MANUAL_DO_USUARIO.md) | Guia ilustrado do usuário final: instalação, login, seleção de skills, leitura de documentos e histórico. |
+| 🏗️ [ARQUITETURA_E_ESPECIFICACAO.md](docs/ARQUITETURA_E_ESPECIFICACAO.md) | Arquitetura técnica, especificações de produto, diagramas de fluxo, ADRs de design e controle de escopo. |
+| 🛠️ [SETUP_E_INFRAESTRUTURA.md](docs/SETUP_E_INFRAESTRUTURA.md) | Setup de infraestrutura, GCP Console, OAuth 2.0, Planilha Google Sheets e Deploy do Apps Script. |
 | 🚀 [GUIA_PUBLICACAO_CHROME_STORE.md](docs/GUIA_PUBLICACAO_CHROME_STORE.md) | Passo a passo de publicação com Acesso Restrito / Não Listado na Chrome Web Store. |
-| 🏗️ [ARQUITETURA_E_ESPECIFICACAO.md](docs/ARQUITETURA_E_ESPECIFICACAO.md) | Arquitetura técnica, especificações de produto, diagramas de fluxo, ADRs de design e políticas de privacidade. |
-| 📋 [BACKLOG_E_USER_STORIES.md](docs/BACKLOG_E_USER_STORIES.md) | Planejamento de produto, Histórias de Usuário (User Stories) e acompanhamento de Sprints (1 a 12). |
 | 💡 [GUIA_DE_SKILLS.md](docs/GUIA_DE_SKILLS.md) | Guia do criador de Habilidades, sintaxe Markdown, manifesto `skills.json` e integração com GitHub. |
+| 📋 [BACKLOG_E_USER_STORIES.md](docs/BACKLOG_E_USER_STORIES.md) | Planejamento de produto, Histórias de Usuário (User Stories) e acompanhamento de Sprints (1 a 14). |
+| 📜 [POLITICA_DE_PRIVACIDADE.md](docs/POLITICA_DE_PRIVACIDADE.md) | Política de privacidade e declarações de segurança de dados. |
 
 > *Nota: Documentações sensíveis contendo IDs internos de infraestrutura (como `SETUP_E_INFRAESTRUTURA.md`) e pastas de credenciais são privadas e não são enviadas para o repositório público.*

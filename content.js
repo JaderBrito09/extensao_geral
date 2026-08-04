@@ -60,7 +60,15 @@
         // ESTRATÉGIA 2: Resolução Ancestral por .closest() em Spans/Rótulos Descendentes
         // Garante que span class="ui-button-text" Download Anexo resolva o pai button ou a
         // ---------------------------------------------------------------------
-        const labelElements = document.querySelectorAll('span, i, label, b, strong, p');
+        const labelElements = document.querySelectorAll(`
+            button span, button i, button label, button b, button strong,
+            a span, a i, a label, a b, a strong,
+            [role="button"] span, [role="button"] i, [role="button"] label,
+            .ui-button-text, .ui-c,
+            span[class*="btn"], span[class*="button"], span[class*="download"],
+            label[class*="btn"], label[class*="button"],
+            i[class*="icon"], i[class*="fa"]
+        `);
         labelElements.forEach((labelEl) => {
             const textContent = labelEl.innerText ? labelEl.innerText.trim() : '';
             
@@ -255,23 +263,101 @@
         }
     }
 
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        if (request.action === 'ACTION_SCAN_DOWNLOADS') {
+    /**
+     * Protocolo de Mensagens Padronizadas para Content Script / iFrames
+     */
+    function createStandardMessage(source, action, payload = {}, target = '*') {
+        return {
+            source: source || 'JORGE_CONTENT',
+            target: target || '*',
+            action: action,
+            payload: payload,
+            timestamp: Date.now()
+        };
+    }
+
+    function isStandardMessage(data) {
+        return data && typeof data === 'object' && typeof data.source === 'string' && data.source.startsWith('JORGE_') && typeof data.action === 'string';
+    }
+
+    // Processamento de mensagens padronizadas recebidas via postMessage (entre janelas e iframes)
+    window.addEventListener('message', (event) => {
+        if (!isStandardMessage(event.data)) return;
+        const msg = event.data;
+        console.log('[ContentScript - PostMessage] Mensagem padronizada recebida:', msg.action, 'no frame:', window.location.href);
+
+        if (msg.action === 'ACTION_SCAN_DOWNLOADS') {
             try {
                 const downloads = collectDownloadButtonInfo();
-                sendResponse({ success: true, downloads: downloads, frameUrl: window.location.href });
+                const responseMsg = createStandardMessage('JORGE_CONTENT', 'ACTION_SCAN_DOWNLOADS_RESPONSE', {
+                    success: true,
+                    downloads: downloads,
+                    frameUrl: window.location.href
+                });
+                if (event.source && typeof event.source.postMessage === 'function') {
+                    event.source.postMessage(responseMsg, '*');
+                }
+            } catch (err) {
+                console.error('[ContentScript - PostMessage] Erro na varredura:', err);
+            }
+        } else if (msg.action === 'ACTION_TRIGGER_DOWNLOAD') {
+            const result = triggerDownloadElement((msg.payload && msg.payload.id) || msg.id);
+            if (event.source && typeof event.source.postMessage === 'function') {
+                event.source.postMessage(createStandardMessage('JORGE_CONTENT', 'ACTION_TRIGGER_DOWNLOAD_RESPONSE', result), '*');
+            }
+        } else if (msg.action === 'ACTION_IFRAME_PING') {
+            if (event.source && typeof event.source.postMessage === 'function') {
+                event.source.postMessage(createStandardMessage('JORGE_IFRAME', 'ACTION_IFRAME_PONG', { frameUrl: window.location.href }), '*');
+            }
+        }
+    });
+
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        // Listener isolado: se houver target definido e não for 'content' ou '*', desconsidera a mensagem
+        if (request.target && request.target !== 'content' && request.target !== '*') {
+            return false;
+        }
+
+        const action = request.action || (request.payload && request.payload.action);
+        const reqId = request.id || (request.payload && request.payload.id);
+
+        if (action === 'ACTION_SCAN_DOWNLOADS') {
+            try {
+                const downloads = collectDownloadButtonInfo();
+                sendResponse({
+                    source: 'JORGE_CONTENT',
+                    action: 'ACTION_SCAN_DOWNLOADS',
+                    success: true,
+                    downloads: downloads,
+                    frameUrl: window.location.href,
+                    timestamp: Date.now()
+                });
             } catch (err) {
                 console.error('[ContentScript - Universal Extractor] Erro durante a varredura:', err);
-                sendResponse({ success: false, error: err.message, downloads: [] });
+                sendResponse({
+                    source: 'JORGE_CONTENT',
+                    action: 'ACTION_SCAN_DOWNLOADS',
+                    success: false,
+                    error: err.message,
+                    downloads: [],
+                    timestamp: Date.now()
+                });
             }
             return true;
         }
 
-        if (request.action === 'ACTION_TRIGGER_DOWNLOAD') {
-            const result = triggerDownloadElement(request.id);
-            sendResponse(result);
+        if (action === 'ACTION_TRIGGER_DOWNLOAD') {
+            const result = triggerDownloadElement(reqId);
+            sendResponse({
+                source: 'JORGE_CONTENT',
+                action: 'ACTION_TRIGGER_DOWNLOAD',
+                ...(result || { success: false, error: 'Sem resposta do elemento' }),
+                timestamp: Date.now()
+            });
             return true;
         }
+
+        return false;
     });
 
     console.log('[ContentScript - Universal Extractor] Script pronto e escutando no frame:', window.location.href);

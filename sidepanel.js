@@ -4,19 +4,100 @@ let skillsConfig = {};
 const MAX_PAGE_CHARS = 30000; // Limite de caracteres para prevenção de estouro de tokens
 const MAX_HISTORY_TURNS = 10; // Número máximo de mensagens do histórico enviadas ao Gemini
 const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash'; // Modelo padrão do Gemini (facilita troca futura)
-const DEFAULT_APPS_SCRIPT_ENDPOINT = "https://script.google.com/macros/s/AKfycbzjrjLaSlID5FGzx5zDoIQjJCUW-5LTImg90v6us2X3v55l0e0_UodEwv70kgbQAdTq/exec";
 
 /**
- * Obtém a URL do Apps Script Proxy Gateway com migração automática de endpoints antigos
+ * Gerenciador de Travas (Mutex) para Operações no Storage Local
+ * Previne condições de corrida em leituras e escritas concorrentes no chrome.storage.local
+ */
+class StorageLockManager {
+  constructor() {
+    this._locks = new Map();
+  }
+
+  async withLock(key, fn) {
+    if (!this._locks.has(key)) {
+      this._locks.set(key, Promise.resolve());
+    }
+
+    const previousLock = this._locks.get(key);
+    let resolveNext;
+    const nextLock = new Promise((resolve) => {
+      resolveNext = resolve;
+    });
+
+    this._locks.set(key, previousLock.then(() => nextLock, () => nextLock));
+
+    try {
+      await previousLock;
+      return await fn();
+    } finally {
+      resolveNext();
+    }
+  }
+
+  async updateKey(key, defaultValue, updaterFn) {
+    return this.withLock(key, async () => {
+      if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) {
+        return defaultValue;
+      }
+      const data = await chrome.storage.local.get(key);
+      const currentValue = (data && data[key] !== undefined) ? data[key] : defaultValue;
+      const updatedValue = await updaterFn(currentValue);
+      if (updatedValue !== undefined) {
+        await chrome.storage.local.set({ [key]: updatedValue });
+      }
+      return updatedValue;
+    });
+  }
+}
+
+const storageLock = new StorageLockManager();
+
+/**
+ * Protocolo de Mensagens Padronizadas entre Extension, Popup, Sidepanel e iFrames
+ */
+function createStandardMessage(source, action, payload = {}, target = '*') {
+  return {
+    source: source || 'JORGE_SIDEPANEL',
+    target: target || '*',
+    action: action,
+    payload: payload,
+    timestamp: Date.now()
+  };
+}
+
+function isStandardMessage(data) {
+  return data && typeof data === 'object' && typeof data.source === 'string' && data.source.startsWith('JORGE_') && typeof data.action === 'string';
+}
+
+// Configuração Imutável do Endpoint Proxy da v7 (Proteção contra alterações dinâmicas em runtime)
+const PROXY_CONFIG = Object.freeze({
+  DEFAULT_APPS_SCRIPT_ENDPOINT: "https://script.google.com/macros/s/AKfycbzjrjLaSlID5FGzx5zDoIQjJCUW-5LTImg90v6us2X3v55l0e0_UodEwv70kgbQAdTq/exec"
+});
+const DEFAULT_APPS_SCRIPT_ENDPOINT = PROXY_CONFIG.DEFAULT_APPS_SCRIPT_ENDPOINT;
+
+/**
+ * Obtém a URL do Apps Script Proxy Gateway garantindo proteção estrita contra alterações dinâmicas ou sobrescritas indevidas na v7
  */
 async function getProxyEndpoint() {
-  if (typeof chrome === 'undefined' || !chrome.storage) return DEFAULT_APPS_SCRIPT_ENDPOINT;
-  const { apps_script_endpoint: storedEndpoint } = await chrome.storage.local.get('apps_script_endpoint');
-  if (!storedEndpoint || storedEndpoint !== DEFAULT_APPS_SCRIPT_ENDPOINT) {
-    await chrome.storage.local.set({ apps_script_endpoint: DEFAULT_APPS_SCRIPT_ENDPOINT });
-    return DEFAULT_APPS_SCRIPT_ENDPOINT;
+  const officialEndpoint = DEFAULT_APPS_SCRIPT_ENDPOINT;
+  if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) {
+    return officialEndpoint;
   }
-  return storedEndpoint;
+
+  try {
+    const { apps_script_endpoint: storedEndpoint } = await chrome.storage.local.get('apps_script_endpoint');
+    if (storedEndpoint && storedEndpoint !== officialEndpoint) {
+      console.warn(`[Proxy Integration Log] Sobrescrita indevida do endpoint do proxy detectada (${storedEndpoint}). Restaurando e forçando o endpoint oficial v7: ${officialEndpoint}`);
+      await chrome.storage.local.set({ apps_script_endpoint: officialEndpoint });
+    } else if (!storedEndpoint) {
+      await chrome.storage.local.set({ apps_script_endpoint: officialEndpoint });
+    }
+  } catch (err) {
+    console.warn('[Proxy Integration Log] Erro ao verificar storage local para o endpoint do proxy:', err);
+  }
+
+  return officialEndpoint;
 }
 
 const STRICT_DOCUMENT_SCOPE_PROMPT = `
@@ -174,6 +255,46 @@ if (typeof chrome !== 'undefined' && chrome.tabs) {
   chrome.tabs.onActivated?.addListener(debouncedCarregarArquivos);
   chrome.tabs.onUpdated?.addListener((tabId, changeInfo) => {
     if (changeInfo.status === 'complete') debouncedCarregarArquivos();
+  });
+}
+
+// Listener isolado de alterações no chrome.storage para sincronia de estado com o Popup
+if (typeof chrome !== 'undefined' && chrome.storage) {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes.detected_page_files) {
+      const newFiles = changes.detected_page_files.newValue || [];
+      if (JSON.stringify(newFiles) !== JSON.stringify(detectedPageFiles)) {
+        detectedPageFiles = newFiles;
+        renderPageFilesUI();
+      }
+    }
+  });
+}
+
+// Listener isolado de mensagens de runtime para o Sidepanel
+if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // Isola o listener do Sidepanel: se houver target e não for 'sidepanel', ignora
+    if (request.target && request.target !== 'sidepanel') {
+      return false;
+    }
+
+    if (request.action === 'ACTION_SYNC_FILES') {
+      if (Array.isArray(request.files)) {
+        detectedPageFiles = request.files;
+        renderPageFilesUI();
+        sendResponse({ success: true });
+        return true;
+      }
+    }
+
+    if (request.action === 'ACTION_REFRESH_PANEL') {
+      carregarArquivosPagina();
+      sendResponse({ success: true });
+      return true;
+    }
+
+    return false;
   });
 }
 
@@ -687,6 +808,7 @@ async function verificarStatusAuth() {
 async function validarUsuarioNaPlanilha(email) {
   try {
     const proxyEndpoint = await getProxyEndpoint();
+    console.log('[Proxy Integration Log] Endpoint proxy validado para verificação de usuário v7:', proxyEndpoint);
 
     const response = await fetch(proxyEndpoint, {
       method: 'POST',
@@ -708,12 +830,11 @@ async function validarUsuarioNaPlanilha(email) {
       return { authorized: false, message: "Erro na validação: " + data.error };
     }
 
-    // Usuário autorizado e com status ATIVO: concede acesso universal a todas as habilidades ("ALL")
-    return { authorized: true, allowed_skills: ["ALL"] };
+    // Retorna as permissões reais de skills vindas do Apps Script Proxy Gateway
+    return { authorized: true, allowed_skills: data.allowed_skills || ["ALL"] };
   } catch (err) {
     console.warn("Aviso na validação de permissão:", err);
-    // Em caso de falha de conexão ou erro no proxy, concede o acesso com fallback ["ALL"]
-    return { authorized: true, allowed_skills: ["ALL"] };
+    return { authorized: false, message: "Erro de conexão ao validar permissões de acesso do usuário." };
   }
 }
 
@@ -947,9 +1068,13 @@ async function iniciarNovaConversa(shouldNotify = true) {
     messages: []
   };
 
-  const { chat_sessions = [] } = await chrome.storage.local.get('chat_sessions');
-  chat_sessions.unshift(newSession);
-  await chrome.storage.local.set({ chat_sessions, active_chat_id: activeChatId });
+  await storageLock.updateKey('chat_sessions', [], async (chat_sessions) => {
+    chat_sessions.unshift(newSession);
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      await chrome.storage.local.set({ active_chat_id: activeChatId });
+    }
+    return chat_sessions;
+  });
 
   if (currentUser && currentUser.allowed_skills) {
     exibirCardSelecaoHabilidadeNoChat(currentUser.allowed_skills);
@@ -1021,24 +1146,29 @@ async function renderizarListaHistorico() {
 }
 
 async function retomarConversa(sessionId) {
-  const { chat_sessions = [] } = await chrome.storage.local.get('chat_sessions');
-  const session = chat_sessions.find(s => s.id === sessionId);
-  if (session) {
-    activeChatId = session.id;
-    await chrome.storage.local.set({ active_chat_id: activeChatId });
-    carregarMensagensDaSessao(session);
-  }
-  historyDrawer.classList.add('hidden');
+  await storageLock.withLock('chat_sessions', async () => {
+    if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) return;
+    const { chat_sessions = [] } = await chrome.storage.local.get('chat_sessions');
+    const session = chat_sessions.find(s => s.id === sessionId);
+    if (session) {
+      activeChatId = session.id;
+      await chrome.storage.local.set({ active_chat_id: activeChatId });
+      carregarMensagensDaSessao(session);
+    }
+  });
+  if (historyDrawer) historyDrawer.classList.add('hidden');
 }
 
 async function excluirConversa(sessionId) {
-  let { chat_sessions = [] } = await chrome.storage.local.get('chat_sessions');
-  chat_sessions = chat_sessions.filter(s => s.id !== sessionId);
-  await chrome.storage.local.set({ chat_sessions });
+  let remainingSessions = [];
+  await storageLock.updateKey('chat_sessions', [], async (chat_sessions) => {
+    remainingSessions = chat_sessions.filter(s => s.id !== sessionId);
+    return remainingSessions;
+  });
 
   if (activeChatId === sessionId) {
-    if (chat_sessions.length > 0) {
-      await retomarConversa(chat_sessions[0].id);
+    if (remainingSessions.length > 0) {
+      await retomarConversa(remainingSessions[0].id);
     } else {
       await iniciarNovaConversa(false);
     }
@@ -1049,13 +1179,14 @@ async function excluirConversa(sessionId) {
 
 async function limparConversaAtual() {
   if (!activeChatId) return;
-  let { chat_sessions = [] } = await chrome.storage.local.get('chat_sessions');
-  const idx = chat_sessions.findIndex(s => s.id === activeChatId);
-  if (idx !== -1) {
-    chat_sessions[idx].messages = [];
-    chat_sessions[idx].updatedAt = new Date().toISOString();
-    await chrome.storage.local.set({ chat_sessions });
-  }
+  await storageLock.updateKey('chat_sessions', [], async (chat_sessions) => {
+    const idx = chat_sessions.findIndex(s => s.id === activeChatId);
+    if (idx !== -1) {
+      chat_sessions[idx].messages = [];
+      chat_sessions[idx].updatedAt = new Date().toISOString();
+    }
+    return chat_sessions;
+  });
   historyEl.innerHTML = `
     <div class="message ai-msg">
       Conversa limpa. Faça uma nova pergunta sobre a aba ativa.
@@ -1162,17 +1293,50 @@ async function carregarArquivosPagina() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab || !tab.id || !tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || tab.url.startsWith('about:')) {
-      pageFilesPanel.classList.add('hidden');
+      detectedPageFiles = [];
+      renderPageFilesUI();
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.local.set({ detected_page_files: [] }).catch(() => {});
+      }
       return;
     }
 
     const results = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: extractPageFilesFromDOM
+    }).catch(() => []);
+
+    detectedPageFiles = (results && results[0]?.result) || [];
+
+    // Tenta complementar com a varredura do content script em todos os frames se disponível
+    chrome.tabs.sendMessage(tab.id, { target: 'content', action: 'ACTION_SCAN_DOWNLOADS' }, (response) => {
+      if (!chrome.runtime.lastError && response && response.success && Array.isArray(response.downloads)) {
+        const extraFiles = response.downloads.map(item => ({
+          name: item.filename || item.name || 'arquivo_download',
+          url: item.url || '#',
+          isDomClick: item.type === 'js_button',
+          id: item.id
+        }));
+
+        // Consolida sem duplicados por chave name + url
+        const existingKeys = new Set(detectedPageFiles.map(f => `${f.name}_${f.url}`));
+        extraFiles.forEach(ef => {
+          const key = `${ef.name}_${ef.url}`;
+          if (!existingKeys.has(key)) {
+            existingKeys.add(key);
+            detectedPageFiles.push(ef);
+          }
+        });
+      }
+
+      renderPageFilesUI();
+
+      // Sincroniza os arquivos detectados no storage local para consumo no Popup
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.local.set({ detected_page_files: detectedPageFiles }).catch(() => {});
+      }
     });
 
-    detectedPageFiles = results[0]?.result || [];
-    renderPageFilesUI();
   } catch (err) {
     console.warn("Erro ao carregar arquivos da página:", err);
     pageFilesPanel.classList.add('hidden');
@@ -1385,73 +1549,263 @@ async function handleFileSelection(e) {
   renderAttachedFilesUI();
 }
 
+/**
+ * Tenta descompactar uma stream de dados comprimida com FlateDecode (zlib ou raw deflate).
+ * Compatível com ambientes de navegador (DecompressionStream) e Node.js (zlib).
+ */
+async function decompressFlateStream(compressedBytes) {
+  if (!compressedBytes || compressedBytes.length === 0) return null;
+
+  if (typeof DecompressionStream !== 'undefined') {
+    try {
+      const ds = new DecompressionStream('deflate');
+      const writer = ds.writable.getWriter();
+      const writePromise = writer.write(compressedBytes).then(() => writer.close()).catch(() => {});
+      const readPromise = new Response(ds.readable).arrayBuffer();
+      const arrayBuffer = await readPromise;
+      await writePromise;
+      return new Uint8Array(arrayBuffer);
+    } catch (e1) {
+      try {
+        const ds = new DecompressionStream('deflate-raw');
+        const writer = ds.writable.getWriter();
+        const writePromise = writer.write(compressedBytes).then(() => writer.close()).catch(() => {});
+        const readPromise = new Response(ds.readable).arrayBuffer();
+        const arrayBuffer = await readPromise;
+        await writePromise;
+        return new Uint8Array(arrayBuffer);
+      } catch (e2) {}
+    }
+  }
+
+  if (typeof require !== 'undefined') {
+    try {
+      const zlib = require('zlib');
+      try {
+        return new Uint8Array(zlib.inflateSync(compressedBytes));
+      } catch (e3) {
+        return new Uint8Array(zlib.inflateRawSync(compressedBytes));
+      }
+    } catch (e4) {}
+  }
+
+  return null;
+}
+
+/**
+ * Converte um buffer de bytes para string tentando UTF-8 primeiro e depois Latin1 (iso-8859-1).
+ */
+function decodeBytesToString(bytes) {
+  if (!bytes) return '';
+  try {
+    const utf8Decoder = new TextDecoder('utf-8', { fatal: true });
+    return utf8Decoder.decode(bytes);
+  } catch (e) {
+    const latin1Decoder = new TextDecoder('latin1');
+    return latin1Decoder.decode(bytes);
+  }
+}
+
+/**
+ * Decodifica caracteres de escape em strings literais do PDF \( \) \\ \n \r \t e octais
+ */
+function decodePdfString(pdfStr) {
+  if (!pdfStr) return '';
+  return pdfStr.replace(/\\([0-7]{1,3}|\r\n|[\s\S])/g, (match, p1) => {
+    if (/^[0-7]{1,3}$/.test(p1)) {
+      return String.fromCharCode(parseInt(p1, 8));
+    }
+    switch (p1) {
+      case 'n': return '\n';
+      case 'r': return '\r';
+      case 't': return '\t';
+      case 'b': return '\b';
+      case 'f': return '\f';
+      case '(': return '(';
+      case ')': return ')';
+      case '\\': return '\\';
+      case '\r\n':
+      case '\n':
+      case '\r':
+        return '';
+      default:
+        return p1;
+    }
+  });
+}
+
+/**
+ * Função principal de extração de texto de um Uint8Array contendo um arquivo PDF.
+ * Suporta PDFs comprimidos (FlateDecode) e não comprimidos com tratamento completo de exceções.
+ */
+async function parsePdfBuffer(bytes) {
+  if (!bytes || !(bytes instanceof Uint8Array) || bytes.length === 0) {
+    throw new Error('Dados do arquivo PDF estão vazios ou inválidos.');
+  }
+
+  const headerStr = decodeBytesToString(bytes.subarray(0, Math.min(bytes.length, 1024)));
+  if (!headerStr.includes('%PDF')) {
+    throw new Error('O arquivo fornecido não é um documento PDF válido.');
+  }
+
+  function matchMarker(arr, index, marker) {
+    if (index + marker.length > arr.length) return false;
+    for (let k = 0; k < marker.length; k++) {
+      if (arr[index + k] !== marker[k]) return false;
+    }
+    return true;
+  }
+
+  const streamMarker = [115, 116, 114, 101, 97, 109]; // "stream"
+  const endstreamMarker = [101, 110, 100, 115, 116, 114, 101, 97, 109]; // "endstream"
+
+  let textSegments = [];
+  let lastIndex = 0;
+
+  for (let i = 0; i < bytes.length - 6; i++) {
+    if (matchMarker(bytes, i, streamMarker)) {
+      // Ignora a palavra "endstream" (cujo sufixo é "stream")
+      if (i >= 3 && bytes[i - 3] === 101 && bytes[i - 2] === 110 && bytes[i - 1] === 100) {
+        continue;
+      }
+
+      const dictStart = Math.max(0, i - 400);
+      const dictHeader = decodeBytesToString(bytes.subarray(dictStart, i));
+      const isFlate = /\/Filter\s*(\/FlateDecode|\[\s*\/FlateDecode\s*\])/i.test(dictHeader);
+
+      textSegments.push(decodeBytesToString(bytes.subarray(lastIndex, i)));
+
+      let streamStart = i + 6;
+      if (streamStart < bytes.length && bytes[streamStart] === 13) streamStart++;
+      if (streamStart < bytes.length && bytes[streamStart] === 10) streamStart++;
+
+      let streamEnd = -1;
+      for (let j = streamStart; j < bytes.length - 9; j++) {
+        if (matchMarker(bytes, j, endstreamMarker)) {
+          streamEnd = j;
+          if (streamEnd > streamStart && (bytes[streamEnd - 1] === 10 || bytes[streamEnd - 1] === 13)) streamEnd--;
+          if (streamEnd > streamStart && (bytes[streamEnd - 1] === 10 || bytes[streamEnd - 1] === 13)) streamEnd--;
+          break;
+        }
+      }
+
+      if (streamEnd !== -1 && streamEnd >= streamStart) {
+        const compressedData = bytes.subarray(streamStart, streamEnd);
+        let decompressedText = null;
+
+        if (isFlate || (compressedData.length > 2 && compressedData[0] === 0x78)) {
+          try {
+            const decompressedBytes = await decompressFlateStream(compressedData);
+            if (decompressedBytes) {
+              decompressedText = decodeBytesToString(decompressedBytes);
+            }
+          } catch (err) {
+            console.warn('Falha ao descompactar stream FlateDecode:', err);
+          }
+        }
+
+        if (decompressedText) {
+          textSegments.push(decompressedText);
+        } else {
+          try {
+            textSegments.push(decodeBytesToString(compressedData));
+          } catch (e) {}
+        }
+
+        i = streamEnd;
+        lastIndex = streamEnd;
+      }
+    }
+  }
+
+  if (lastIndex < bytes.length) {
+    textSegments.push(decodeBytesToString(bytes.subarray(lastIndex)));
+  }
+
+  const combinedRawText = textSegments.join('\n');
+
+  // 1. Extração de blocos de texto PDF (BT ... ET)
+  const textBlocks = [];
+  const btRegex = /(?:^|\s|\/)?BT[\s\S]*?ET/gi;
+  let match;
+  while ((match = btRegex.exec(combinedRawText)) !== null) {
+    const block = match[0];
+    const stringMatches = block.match(/\((?:[^()\\]|\\[\s\S])*\)|<[0-9a-fA-F]+>/g);
+    if (stringMatches) {
+      const cleaned = stringMatches
+        .map(s => {
+          if (s.startsWith('(') && s.endsWith(')')) {
+            return decodePdfString(s.slice(1, -1));
+          } else if (s.startsWith('<') && s.endsWith('>')) {
+            const hex = s.slice(1, -1);
+            if (hex.length % 2 === 0) {
+              let str = '';
+              for (let h = 0; h < hex.length; h += 2) {
+                const charCode = parseInt(hex.substr(h, 2), 16);
+                if (charCode >= 32 && charCode <= 255) str += String.fromCharCode(charCode);
+              }
+              return str;
+            }
+          }
+          return '';
+        })
+        .filter(s => s.trim().length > 0)
+        .join(' ');
+
+      if (cleaned.trim().length > 0) {
+        textBlocks.push(cleaned.trim());
+      }
+    }
+  }
+
+  let extractedText = textBlocks.join(' ');
+
+  // 2. Extração via regex de sequências de texto entre parênteses se não houver blocos BT
+  if (!extractedText || extractedText.trim().length === 0) {
+    const stringMatches = combinedRawText.match(/\((?:[^()\\]|\\[\s\S])*\)/g);
+    if (stringMatches) {
+      extractedText = stringMatches
+        .map(s => decodePdfString(s.slice(1, -1)))
+        .filter(s => s.trim().length > 0)
+        .join(' ');
+    }
+  }
+
+  // 3. Fallback estendido: extração de caracteres imprimíveis se ainda não houver texto
+  if (!extractedText || extractedText.trim().length === 0) {
+    const printableMatches = combinedRawText.match(/[\x20-\x7E\xA0-\xFF\n\r\t]{3,}/g);
+    if (printableMatches) {
+      extractedText = printableMatches
+        .filter(str => !str.startsWith('/') && !str.includes('<<') && !str.includes('>>') && !str.includes('endobj') && !str.includes('stream') && !str.includes('xref') && !str.includes('trailer'))
+        .join(' ');
+    }
+  }
+
+  return extractedText ? extractedText.replace(/\s+/g, ' ').trim() : '';
+}
+
 function readFileContent(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
     if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
-      reader.onload = (evt) => {
+      reader.onload = async (evt) => {
         try {
           const buffer = evt.target.result;
           const bytes = new Uint8Array(buffer);
-          let rawText = '';
           
-          const chunkSize = 8192;
-          for (let i = 0; i < bytes.length; i += chunkSize) {
-            const chunk = bytes.subarray(i, i + chunkSize);
-            rawText += String.fromCharCode.apply(null, chunk);
-          }
-
-          // 1. Extração de blocos de texto PDF /BT ... /ET e strings (Tj / TJ / td / TD)
-          const textBlocks = [];
-          const btRegex = /\/BT[\s\S]*?\/ET/gi;
-          let match;
-          while ((match = btRegex.exec(rawText)) !== null) {
-            const block = match[0];
-            const stringMatches = block.match(/\(([^()\\]|\\[\s\S])*\)|\[([\s\S]*?)\]/g);
-            if (stringMatches) {
-              const cleaned = stringMatches
-                .map(s => s.replace(/[\(\)\[\]]/g, '').replace(/\\([()])/g, '$1'))
-                .join(' ');
-              if (cleaned.trim().length > 0) {
-                textBlocks.push(cleaned.trim());
-              }
-            }
-          }
-
-          let extractedText = textBlocks.join(' ');
-
-          // 2. Extração via regex de sequências de texto em streams descompactadas
-          if (!extractedText || extractedText.trim().length < 20) {
-            const streamMatches = rawText.match(/\/Text[\s\S]*?endstream|stream[\s\S]*?endstream/gi);
-            if (streamMatches) {
-              streamMatches.forEach(st => {
-                const subStr = st.match(/\(([^()\\]|\\[\s\S])*\)/g);
-                if (subStr) {
-                  textBlocks.push(subStr.map(s => s.slice(1, -1)).join(' '));
-                }
-              });
-              extractedText = textBlocks.join(' ');
-            }
-          }
-
-          // 3. Fallback estendido: extração de qualquer sequência de caracteres de texto imprimíveis (UTF-8/Latin1)
-          if (!extractedText || extractedText.trim().length < 20) {
-            const printableMatches = rawText.match(/[\x20-\x7E\xA0-\xFF\n\r\t]{3,}/g);
-            if (printableMatches) {
-              extractedText = printableMatches
-                .filter(str => !str.startsWith('/') && !str.includes('<<') && !str.includes('>>') && !str.includes('endobj') && !str.includes('stream') && !str.includes('xref') && !str.includes('trailer'))
-                .join(' ');
-            }
+          let extractedText = '';
+          try {
+            extractedText = await parsePdfBuffer(bytes);
+          } catch (parseErr) {
+            console.warn('Erro ao processar estrutura do PDF:', parseErr);
           }
 
           if (extractedText && extractedText.trim().length > 10) {
-            // Limpa múltiplos espaços excessivos
-            const cleanFinalText = extractedText.replace(/\s+/g, ' ').trim();
-            resolve(`[DOCUMENTO PDF: ${file.name}]\n${cleanFinalText}`);
+            resolve(`[DOCUMENTO PDF: ${file.name}]\n${extractedText.trim()}`);
           } else {
-            // Se for PDF puramente escaneado ou binário codificado, gera aviso legível
-            resolve(`[DOCUMENTO PDF: ${file.name}]\n(Nota: Este arquivo PDF contém imagens digitalizadas sem camada de texto nativa extraível. O conteúdo extraído das streams foi: ${rawText.slice(0, 500).replace(/[^\x20-\x7E]/g, ' ')})`);
+            const rawPreview = decodeBytesToString(bytes.subarray(0, Math.min(bytes.length, 500))).replace(/[^\x20-\x7E]/g, ' ');
+            resolve(`[DOCUMENTO PDF: ${file.name}]\n(Nota: Este arquivo PDF contém imagens digitalizadas sem camada de texto nativa extraível. Conteúdo extraído: ${rawPreview})`);
           }
         } catch (err) {
           reject(err);
@@ -1801,6 +2155,7 @@ async function processarRequisicao() {
     
     // Obter URL do endpoint do Apps Script das configurações (ou fallback padrão oficial)
     const proxyEndpoint = await getProxyEndpoint();
+    console.log('[Proxy Integration Log] Endpoint proxy validado para envio de requisição v7:', proxyEndpoint);
 
     // Recorrer ao histórico da sessão ativa
     const { chat_sessions = [] } = await chrome.storage.local.get('chat_sessions');
@@ -1841,8 +2196,31 @@ ${userInput || "Por favor, analise a página ativa e os documentos anexados."}
     // E-mail do usuário autenticado (ou fallback)
     const userEmailToSend = currentUser?.email || "usuario@local.dev";
 
+    // Habilidade solicitada para envio e validação no backend Proxy
+    const requestedSkillId = currentSkill?.id || currentSkill?.slug || selectedSkillKey || "";
+
+    // Validação client-side para impedir execução se a habilidade não for permitida para o usuário
+    const userAllowedSkills = currentUser?.allowed_skills || ["ALL"];
+    const normAllowedSkills = userAllowedSkills.map(s => s.trim().toUpperCase());
+    const isAllAllowed = normAllowedSkills.includes("ALL") || normAllowedSkills.includes("*") || normAllowedSkills.includes("TODAS");
+
+    if (!isAllAllowed) {
+      const reqUpper = (requestedSkillId || "").toUpperCase();
+      const reqKeyUpper = (selectedSkillKey || "").toUpperCase();
+      const reqCatUpper = (currentSkill?.category || "").toUpperCase();
+
+      const hasPermission = normAllowedSkills.includes(reqUpper) || 
+                            normAllowedSkills.includes(reqKeyUpper) || 
+                            normAllowedSkills.includes(reqCatUpper);
+
+      if (!hasPermission) {
+        throw new Error(`A Habilidade '${currentSkill?.label || selectedSkillKey}' não está autorizada no seu perfil de usuário.`);
+      }
+    }
+
     const payloadBody = {
       userEmail: userEmailToSend,
+      requestedSkill: requestedSkillId,
       systemInstruction: systemInstructionText,
       contents: contents,
       model: DEFAULT_GEMINI_MODEL
@@ -2042,11 +2420,8 @@ function scrollToBottom() {
   historyEl.scrollTop = historyEl.scrollHeight;
 }
 
-let _persistQueue = Promise.resolve();
-
 function persistMessage(text, type) {
-  _persistQueue = _persistQueue.then(async () => {
-    let { chat_sessions = [] } = await chrome.storage.local.get('chat_sessions');
+  return storageLock.updateKey('chat_sessions', [], async (chat_sessions) => {
     let session = chat_sessions.find(s => s.id === activeChatId);
 
     if (!session) {
@@ -2066,7 +2441,36 @@ function persistMessage(text, type) {
       session.title = text.slice(0, 32).trim() + (text.length > 32 ? '...' : '');
     }
 
-    await chrome.storage.local.set({ chat_sessions, active_chat_id: activeChatId });
-  }).catch(err => console.error('persistMessage queue error:', err));
-  return _persistQueue;
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      await chrome.storage.local.set({ active_chat_id: activeChatId });
+    }
+    return chat_sessions;
+  }).catch(err => console.error('persistMessage error:', err));
 }
+
+// Sincronização em tempo real do Storage entre contextos
+if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local') {
+      if (changes.active_chat_id && changes.active_chat_id.newValue !== activeChatId) {
+        activeChatId = changes.active_chat_id.newValue;
+      }
+      if (changes.chat_sessions && historyDrawer && !historyDrawer.classList.contains('hidden')) {
+        renderizarListaHistorico();
+      }
+    }
+  });
+}
+
+// Escuta de mensagens padronizadas via postMessage
+window.addEventListener('message', (event) => {
+  if (!isStandardMessage(event.data)) return;
+  const msg = event.data;
+  console.log('[Sidepanel] Mensagem padronizada recebida:', msg.action, 'de:', msg.source);
+
+  if (msg.action === 'ACTION_STORAGE_SYNC') {
+    if (msg.payload && msg.payload.activeChatId) {
+      activeChatId = msg.payload.activeChatId;
+    }
+  }
+});

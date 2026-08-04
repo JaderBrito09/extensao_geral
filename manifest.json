@@ -6,8 +6,7 @@
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
-    "128": "icons/icon128.png",
-    "512": "icons/icon512.png"
+    "128": "icons/icon128.png"
   },
   "permissions": [
     "sidePanel",
@@ -39,7 +38,6 @@
     }
   ],
   "action": {
-    "default_popup": "popup.html",
     "default_title": "Abrir Assistente do Jorge",
     "default_icon": {
       "16": "icons/icon16.png",
