@@ -118,14 +118,22 @@ assert(sidepanelCode.includes('attachedFiles'), "Gestão de anexos do usuário d
 assert(sidepanelCode.includes('chat_sessions'), "Histórico de sessões de conversa salvas no computador deve estar implementado");
 
 // ---------------------------------------------------------
-// Teste Versão 7: Proteção de Endpoint do Proxy e Logs de Integração
+// Teste Versão 7: Proteção de Endpoint do Proxy, Token OAuth e Logs de Integração
 // ---------------------------------------------------------
-console.log("\n--- Testando Proteção de Endpoint do Proxy na v7 ---");
+console.log("\n--- Testando Proteção de Endpoint do Proxy, Autenticação e Sanitização v7 ---");
 
 assert(sidepanelCode.includes('PROXY_CONFIG'), "Objeto PROXY_CONFIG imutável deve estar definido");
 assert(sidepanelCode.includes('Object.freeze'), "Configuração do proxy deve estar congelada com Object.freeze");
 assert(sidepanelCode.includes('[Proxy Integration Log]'), "Logs de integração do proxy devem estar implementados");
 assert(sidepanelCode.includes('Sobrescrita indevida do endpoint do proxy detectada'), "Detecção e restauração contra override indevido deve estar no sidepanel.js");
+
+// SEC-01 & SEC-03 Testes
+assert(sidepanelCode.includes('<untrusted_web_content'), "sidepanel.js deve envolver a captura de DOM em <untrusted_web_content> para prevenir Indirect Prompt Injection (SEC-03)");
+assert(sidepanelCode.includes('authToken:'), "sidepanel.js deve enviar o authToken no payload JSON do proxy (SEC-01)");
+
+const gsCodeCheck = fs.readFileSync(path.join(__dirname, '../apps-script/Code.gs'), 'utf8');
+assert(gsCodeCheck.includes('verificarTokenGoogle'), "Code.gs deve implementar verificação criptográfica do token Google (SEC-01)");
+assert(gsCodeCheck.includes('oauth2/v3/userinfo') || gsCodeCheck.includes('oauth2/v2/userinfo') || gsCodeCheck.includes('tokeninfo'), "Code.gs deve consultar o endpoint de validação da API do Google");
 
 // Simulação de execução da lógica de getProxyEndpoint com mock de chrome.storage
 async function runProxyEndpointProtectionTest() {
@@ -621,6 +629,36 @@ runProxyEndpointProtectionTest().then(async () => {
     invalidPdfCaught = err.message.includes("não é um documento PDF válido");
   }
   assert(invalidPdfCaught, "Arquivo sem cabeçalho %PDF deve lançar exceção tratada com mensagem explicativa");
+
+  // ---------------------------------------------------------
+  // Teste Sprint 16: Google Docs/Sheets APIs e Conversor de Relatórios (.txt)
+  // ---------------------------------------------------------
+  console.log("\n--- Testando Integração Google Docs/Sheets APIs e Conversor de Relatórios (.txt) ---");
+
+  assert(sidepanelCode.includes('extrairConteudoGoogleDocOuSheet'), "sidepanel.js deve possuir a função extrairConteudoGoogleDocOuSheet");
+  assert(sidepanelCode.includes('docs.googleapis.com/v1/documents'), "sidepanel.js deve integrar a API v1 do Google Documents");
+  assert(sidepanelCode.includes('sheets.googleapis.com/v4/spreadsheets'), "sidepanel.js deve integrar a API v4 do Google Sheets");
+  assert(sidepanelCode.includes('/export?format=txt'), "sidepanel.js deve possuir fallback para exportação em texto puro (.txt)");
+  assert(sidepanelCode.includes('/export?format=csv'), "sidepanel.js deve possuir fallback para exportação em CSV (.csv)");
+
+  assert(sidepanelCode.includes('converterMarkdownParaTxtFormatado'), "sidepanel.js deve possuir a função converterMarkdownParaTxtFormatado");
+  assert(sidepanelCode.includes('relatorio_jorge_'), "sidepanel.js deve exportar relatórios no formato .txt com o prefixo relatorio_jorge_");
+  assert(sidepanelCode.includes("type: 'text/plain;charset=utf-8;'"), "MIME type de exportação deve ser text/plain");
+
+  // Teste unitário da função converterMarkdownParaTxtFormatado
+  const fnMatch = sidepanelCode.match(/function converterMarkdownParaTxtFormatado[\s\S]*?\n\}/);
+  assert(fnMatch, "Definição da função converterMarkdownParaTxtFormatado deve ser encontrada");
+  const evalConverter = new Function(`${fnMatch[0]}; return converterMarkdownParaTxtFormatado;`)();
+
+  const sampleMd = `# TÍTULO DO RELATÓRIO\n\n## 1. INTRODUÇÃO\n\n**Texto em destaque** e *itálico*.\n\n- Item A\n- Item B\n\n| Coluna 1 | Coluna 2 |\n|---|---|\n| Val 1 | Val 2 |`;
+  const txtOutput = evalConverter(sampleMd);
+
+  assert(txtOutput.includes("RELATÓRIO DE ANÁLISE - ASSISTENTE DO JORGE"), "TXT formatado deve conter cabeçalho oficial");
+  assert(txtOutput.includes("TÍTULO DO RELATÓRIO"), "TXT formatado deve conter o título em caixa alta");
+  assert(txtOutput.includes("1. INTRODUÇÃO"), "TXT formatado deve conter a seção em caixa alta");
+  assert(txtOutput.includes("• Item A"), "TXT formatado deve formatar marcadores de lista com bullets");
+  assert(txtOutput.includes("+----------+----------+"), "TXT formatado deve construir tabelas ASCII com bordas alinhadas");
+  assert(txtOutput.includes("Fim do Relatório - Gerado automaticamente pelo Assistente do Jorge"), "TXT formatado deve conter rodapé oficial");
 
   console.log(`\n=== RESULTADO FINAL DE TESTES: ${passed} Passaram, ${failed} Falharam ===`);
   if (failed > 0) process.exit(1);

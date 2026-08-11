@@ -10,9 +10,45 @@
  * 5. Retornar a resposta sanitizada ou mensagens de erro de permissão
  */
 
-// ID da Planilha Google de Controle de Usuários (Substitua se necessário)
-const SPREADSHEET_ID = "1VbXL-23CimrbmoEThgPRSepOfzmgRtTXrIyftwXBRGE";
+// ID da Planilha Google de Controle de Usuários (Configurável via Script Properties ou fallback)
+const DEFAULT_SPREADSHEET_ID = "1VbXL-23CimrbmoEThgPRSepOfzmgRtTXrIyftwXBRGE";
 const SHEET_NAME = "Usuarios";
+
+function getSpreadsheetId() {
+  const propId = PropertiesService.getScriptProperties().getProperty("SPREADSHEET_ID");
+  return propId && propId.trim() ? propId.trim() : DEFAULT_SPREADSHEET_ID;
+}
+
+/**
+ * Valida o token OAuth do Google (Identity Token / Access Token) chamando o endpoint oficial da Google API.
+ * Retorna o e-mail verificado pelo Google ou null se inválido.
+ */
+function verificarTokenGoogle(token) {
+  if (!token) return null;
+  try {
+    // 1. Tenta validar como Bearer/Access Token no endpoint userinfo
+    const urlUserinfo = "https://www.googleapis.com/oauth2/v3/userinfo";
+    const respUserinfo = UrlFetchApp.fetch(urlUserinfo, {
+      headers: { Authorization: "Bearer " + token },
+      muteHttpExceptions: true
+    });
+    if (respUserinfo.getResponseCode() === 200) {
+      const data = JSON.parse(respUserinfo.getContentText());
+      if (data.email) return data.email.toLowerCase().trim();
+    }
+
+    // 2. Fallback: Tenta validar como ID Token no endpoint tokeninfo
+    const urlTokeninfo = "https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(token);
+    const respTokeninfo = UrlFetchApp.fetch(urlTokeninfo, { muteHttpExceptions: true });
+    if (respTokeninfo.getResponseCode() === 200) {
+      const data = JSON.parse(respTokeninfo.getContentText());
+      if (data.email) return data.email.toLowerCase().trim();
+    }
+  } catch (err) {
+    console.warn("Erro ao validar token Google:", err);
+  }
+  return null;
+}
 
 function doPost(e) {
   try {
@@ -21,11 +57,25 @@ function doPost(e) {
     }
 
     const data = JSON.parse(e.postData.contents);
-    const userEmail = (data.userEmail || "").trim().toLowerCase();
+    const authToken = data.authToken || data.token || "";
+    let userEmail = (data.userEmail || "").trim().toLowerCase();
     const promptConsolidado = data.promptConsolidado || "";
     const systemInstruction = data.systemInstruction || "";
     const model = data.model || "gemini-2.5-flash";
     const requestedSkill = (data.requestedSkill || data.skill || "").trim();
+
+    // SEC-01: Validação Criptográfica do Token Google (Autenticação Forte)
+    if (authToken) {
+      const verifiedEmail = verificarTokenGoogle(authToken);
+      if (verifiedEmail) {
+        userEmail = verifiedEmail;
+      } else {
+        return jsonResponse({ 
+          error: "ACESSO_NEGADO", 
+          message: "Token de autenticação do Google inválido ou expirado. Favor realizar login novamente." 
+        }, 401);
+      }
+    }
 
     if (!userEmail) {
       return jsonResponse({ error: "E-mail do usuário não informado no payload." }, 401);
@@ -144,8 +194,9 @@ function doPost(e) {
 function validarAcessoUsuario(email) {
   try {
     let sheet;
+    const targetSpreadsheetId = getSpreadsheetId();
     try {
-      sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+      sheet = SpreadsheetApp.openById(targetSpreadsheetId).getSheetByName(SHEET_NAME);
     } catch (e) {
       // Se não encontrar por ID, tenta usar a planilha ativa
       sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);

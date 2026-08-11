@@ -22,6 +22,15 @@
      * Coleta informações de todos os downloads disponíveis na página ativa.
      */
     function collectDownloadButtonInfo() {
+        // FE-01: Evita overhead de execução em iFrames invisíveis ou minúsculos (ex: tracking pixels, analytics)
+        if (window.self !== window.top) {
+            const isVisibleFrame = window.innerWidth > 10 && window.innerHeight > 10;
+            if (!isVisibleFrame) {
+                console.log('[ContentScript - Universal Extractor] Frame invisível ou de tracking ignorado:', window.location.href);
+                return [];
+            }
+        }
+
         const results = [];
         const seenElements = new Set();
         let counter = 0;
@@ -359,6 +368,31 @@
 
         return false;
     });
+
+    // ARCH-02: Observador de mutações do DOM para suporte a SPAs (React/Vue/Angular)
+    let spaObserver = null;
+    let lastMutationTime = Date.now();
+
+    function setupSpaObserver() {
+        if (spaObserver) return;
+        try {
+            spaObserver = new MutationObserver(() => {
+                lastMutationTime = Date.now();
+            });
+            spaObserver.observe(document.body || document.documentElement, {
+                childList: true,
+                subtree: true
+            });
+        } catch (e) {
+            console.warn('[ContentScript - SPA Observer] Aviso ao iniciar MutationObserver:', e);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupSpaObserver);
+    } else {
+        setupSpaObserver();
+    }
 
     console.log('[ContentScript - Universal Extractor] Script pronto e escutando no frame:', window.location.href);
 })();

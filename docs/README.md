@@ -1,8 +1,6 @@
-# 📚 Documentação Técnica e Operacional — Assistente do Jorge
+# 📚 Documentação Técnica e Operacional — Agente MVP (Hermes Agent & WebApp)
 
-Bem-vindo ao centro de documentação oficial do **Assistente do Jorge**, extensão analítica inteligente para Google Chrome (Manifest V3) integrada ao painel lateral (`sidePanel`).
-
-Este repositório reúne a documentação de arquitetura, instalação, configuração, publicação e utilização do projeto.
+Bem-vindo ao centro de documentação oficial do ecossistema **Hermes Agent MVP**, reunindo o WebApp corporativo (Next.js), o Cérebro Central do Agent (VPS Hostinger), o Banco de Dados PostgreSQL (`pgvector`) e os Clientes de Borda (incluindo a Extensão Chrome **Assistente do Jorge**).
 
 ---
 
@@ -10,13 +8,37 @@ Este repositório reúne a documentação de arquitetura, instalação, configur
 
 | Documento | Foco | Conteúdo Principal |
 | :--- | :--- | :--- |
-| 📖 [MANUAL_DO_USUARIO.md](MANUAL_DO_USUARIO.md) | Usuário Final | Guia de uso, instalação no Chrome, login Google, seleção de Habilidades e gestão de arquivos/conversas. |
-| 🏗️ [ARQUITETURA_E_ESPECIFICACAO.md](ARQUITETURA_E_ESPECIFICACAO.md) | Arquitetura | Modelo Client-Proxy, Diagramas de Sequência (Mermaid), ADRs, Permissões V3 e Segurança. |
-| 🛠️ [SETUP_E_INFRAESTRUTURA.md](SETUP_E_INFRAESTRUTURA.md) | Infraestrutura | Setup de GCP, OAuth 2.0, Planilha Google Sheets, Deploy do Apps Script e Parâmetros do Projeto. |
-| 💡 [GUIA_DE_SKILLS.md](GUIA_DE_SKILLS.md) | Especialistas | Estruturação de Habilidades (`SKILL.md`), manifesto `skills.json` e integração com o repositório GitHub. |
-| 🚀 [GUIA_PUBLICACAO_CHROME_STORE.md](GUIA_PUBLICACAO_CHROME_STORE.md) | Publicação | Passo a passo de submissão na Chrome Web Store (Acesso Restrito / Não Listado). |
-| 📋 [BACKLOG_E_USER_STORIES.md](BACKLOG_E_USER_STORIES.md) | Produto/PM | Histórias de Usuário (US-01 a US-07) e Roteiro de Sprints (1 a 14). |
-| 📜 [POLITICA_DE_PRIVACIDADE.md](POLITICA_DE_PRIVACIDADE.md) | Compliance | Termos de privacidade e declaração de uso de dados exigidos pelo Google. |
+| 📖 [PDR.md](PDR.md) | Produto | Visão geral do produto, requisitos de negócio e escopo funcional do MVP. |
+| 🏗️ [ARQUITETURA_E_ESPECIFICACAO.md](ARQUITETURA_E_ESPECIFICACAO.md) | Arquitetura | Visão da arquitetura alvo, Diagramas Mermaid, ADRs e fluxo de comunicação unificado. |
+| 🛠️ [INFRASTRUCTURE.md](INFRASTRUCTURE.md) | Infraestrutura | Setup de VPS (Hostinger), Easypanel (Projeto `agente`), PostgreSQL 16 + pgvector e Deploy via SSH. |
+| 🔌 [API_INTEGRATION.md](API_INTEGRATION.md) | Integração API | Contrato REST/SSE para clientes (Webapp Next.js, Extensão Chrome e APIs externas). |
+| 💡 [SKILLS_AND_PROJECTS.md](SKILLS_AND_PROJECTS.md) | Skills & RAG | Mapeamento de Skills nativas no Hermes, isolamento de RAG e gestão de projetos no Postgres. |
+| 📋 [BACKLOG.md](BACKLOG.md) | Produto/PM | Backlog do produto, histórias de usuário, matriz SDD e roadmap de desenvolvimento. |
+| 🌊 [SSE_STREAMING_GUIDE.md](SSE_STREAMING_GUIDE.md) | Protocolo | Guia de implementação de streaming Server-Sent Events (SSE) para chat em tempo real. |
+
+---
+
+## 🎯 1. Princípios de Arquitetura Unificada (Cérebro Central na VPS)
+
+O ecossistema adota o conceito de **Cérebro Unificado Centralizado**:
+
+```text
+[ Cliente: WebApp Next.js ]  ──┐
+                               ├──> [ API REST/SSE (VPS) ] ──> [ Hermes Agent Core ] ──> [ Postgres + pgvector ]
+[ Cliente: Chrome Extension ] ──┘
+```
+
+1. **Hermes Agent (VPS Hostinger KVM 4)**:
+   * Mantém **100% de suas capacidades nativas** (terminal shell, leitura/escrita de arquivos, orquestração de skills, background jobs, acesso ao Gemini 2.5 Flash / Ollama local).
+   * Atua como serviço centralizado na VPS, podendo servir múltiplos frontends e integrações simultaneamente.
+
+2. **WebApp Corporativo (Next.js para 20+ Usuários)**:
+   * Interface otimizada e simplificada para gestão de documentação (Wiki/SDD), RAG de projetos, chat interativo e Google Drive.
+   * **Escopo Controlado (RBAC)**: Remove interfaces ruidosas ou perigosas (como terminal web exposto para usuários comuns, gestão visual de workspaces Git locais e edição crua de chaves de API).
+
+3. **Extensão Chrome ("Assistente do Jorge")**:
+   * Cliente leve de captura e interação na borda do navegador.
+   * Migrada da arquitetura legada (Apps Script + Planilhas Google + GitHub raw) para se comunicar diretamente com a **API do Hermes Agent na VPS**, consumindo autenticação OAuth e permissões unificadas no PostgreSQL.
 
 ---
 

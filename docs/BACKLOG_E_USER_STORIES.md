@@ -75,9 +75,28 @@ Este documento reúne o planejamento de entregas do **Assistente do Jorge**, inc
   - Validação ultra-rápida de acesso no momento do login e atualização em tempo real de permissões.
   - Painel Web Admin (ou interface do Supabase) para cadastro simples com seleção de checkboxes das skills liberadas.
 
+### 🔹 US-08: Leitura Integrada via API do Google Documents e Google Sheets
+* **Como** usuário colaborador do assistente,
+* **Quero** que a extensão leia o conteúdo completo de documentos do Google Docs e planilhas do Google Sheets diretamente via API (ou exportação autenticada),
+* **Para que** eu possa realizar análises e tirar dúvidas sobre documentos e planilhas armazenados no Google Drive sem limitações de captura de tela.
+* **Critérios de Aceite**:
+  - Identificar automaticamente links e abas ativas do Google Docs (`/document/d/...`) e Google Sheets (`/spreadsheets/d/...`).
+  - Utilizar a API do Google Documents v1 (`/v1/documents/`) e Google Sheets v4 (`/v4/spreadsheets/`) com token Google OAuth2 (`chrome.identity.getAuthToken`).
+  - Implementar fallback resiliente para endpoints de exportação em texto puro (`/export?format=txt`) e CSV (`/export?format=csv`).
+  - Integrar a leitura completa tanto à aba ativa quanto ao popover de anexos (Google Drive / Inserir Link).
+
+### 🔹 US-09: Formatação e Exportação de Relatórios em Texto Puro (.txt)
+* **Como** usuário analista,
+* **Quero** baixar respostas e relatórios fornecidos pelo assistente no formato de texto puro `.txt` com formatação visual estruturada (caixa alta para títulos, delimitadores visuais, divisores de seção e tabelas ASCII alinhadas),
+* **Para que** os relatórios fiquem limpos, padronizados, legíveis em qualquer editor e livres de sintaxe crua de Markdown.
+* **Critérios de Aceite**:
+  - Substituir o botão e a extensão de download na interface de `.md` para `.txt` ("Baixar relatório (.txt)").
+  - Converter dinamicamente marcas de Markdown (# H1, ## H2, ### H3, **negrito**, tabelas) em texto formatado com bordas (`===`, `---`, `►`), alinhamento de colunas e caixas ASCII.
+  - Adicionar cabeçalho e rodapé padronizados do relatório com data de geração e identificador oficial do Assistente do Jorge.
+
 ---
 
-## 📅 Quadro de Acompanhamento de Sprints (1 a 14)
+## 📅 Quadro de Acompanhamento de Sprints (1 a 16)
 
 ### Sprint 1 — Fundação do Projeto e Estrutura MV3
 - `[x]` Tarefa 1: Criar arquivo `manifest.json` com Manifest V3
@@ -152,4 +171,14 @@ Este documento reúne o planejamento de entregas do **Assistente do Jorge**, inc
 - `[x]` Tarefa 42: Resolver conflito de interface entre Popup e Sidepanel isolando listeners por `target` em toda a extensão.
 - `[x]` Tarefa 43: Adicionar `StorageLockManager` para evitar race conditions no storage e padronizar o envio de mensagens via iframe com helpers `JORGE_*`.
 - `[x]` Tarefa 44: Aplicar nits de código da revisão `t_bc8f044c` e manter a suíte de testes com 55 verificações aprovadas.
+
+### Sprint 17 — Remediação dos Achados de Segurança, Arquitetura & Conformidade MV3 (v8)
+- `[x]` Tarefa 51 (Bloqueante): Implementar verificação criptográfica do Token OAuth do Google no `Code.gs` (`SEC-01`).
+- `[x]` Tarefa 52 (Bloqueante): Restringir permissões de host no `manifest.json` removendo o escopo irrestrito `<all_urls>` (`SEC-02`).
+- `[x]` Tarefa 53: Prevenir Indirect Prompt Injection no `sidepanel.js` usando a tag `<untrusted_web_content>` e instrução de sistema estrita (`SEC-03`).
+- `[x]` Tarefa 54: Adicionar filtro de frames invisíveis e `MutationObserver` no `content.js` para suporte resiliente a SPAs (`FE-01` e `ARCH-02`).
+- `[x]` Tarefa 55: Modularizar componentes em `src/` e tratar fontes CID/CMap no parser de PDF (`ARCH-01` e `ARCH-03`).
+- `[x]` Tarefa 56: Atualizar a suíte de testes com 59 verificações aprovadas com 100% de sucesso.
+
+
 

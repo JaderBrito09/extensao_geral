@@ -193,6 +193,9 @@ async function extractTextFromPdfBytes(bytes) {
     }
   }
 
+  // ARCH-03: Detecção de fontes complexas CID/Type0/ToUnicode CMap
+  const hasCMapFont = /\/ToUnicode|\/CIDInit|\/CIDFontType/i.test(combinedRawText);
+
   let extractedText = textBlocks.join(' ');
 
   if (!extractedText || extractedText.trim().length < 20) {
@@ -214,7 +217,13 @@ async function extractTextFromPdfBytes(bytes) {
     }
   }
 
-  return extractedText ? extractedText.replace(/\s+/g, ' ').trim() : '';
+  const finalResult = extractedText ? extractedText.replace(/\s+/g, ' ').trim() : '';
+
+  if (hasCMapFont && (!finalResult || finalResult.length < 30)) {
+    return `${finalResult} [Aviso: Este PDF utiliza codificação de fonte personalizada/CID CMap. O texto pode requerer OCR ou biblioteca externa para renderização completa.]`.trim();
+  }
+
+  return finalResult;
 }
 
 // Helper to construct PDF binary buffers
