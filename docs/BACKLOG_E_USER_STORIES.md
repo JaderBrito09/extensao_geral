@@ -172,6 +172,14 @@ Este documento reúne o planejamento de entregas do **Assistente do Jorge**, inc
 - `[x]` Tarefa 43: Adicionar `StorageLockManager` para evitar race conditions no storage e padronizar o envio de mensagens via iframe com helpers `JORGE_*`.
 - `[x]` Tarefa 44: Aplicar nits de código da revisão `t_bc8f044c` e manter a suíte de testes com 55 verificações aprovadas.
 
+### Sprint 16 — Leitura via Google Docs/Sheets APIs & Formatação de Relatórios (.txt)
+- `[x]` Tarefa 45: Implementar função `extrairConteudoGoogleDocOuSheet` no `sidepanel.js` para integração com Google Documents API v1 e Google Sheets API v4.
+- `[x]` Tarefa 46: Adicionar fallback resiliente para os endpoints de exportação em texto puro (`/export?format=txt`) e CSV (`/export?format=csv`).
+- `[x]` Tarefa 47: Integrar extração de documentos do Google Docs e Sheets ao menu de anexos (`optGoogleDrive` / `optInsertLink`) e à detecção de aba ativa.
+- `[x]` Tarefa 48: Implementar o conversor de relatórios Markdown `converterMarkdownParaTxtFormatado` com formatação de fontes, hierarquia visual, divisores e tabelas ASCII.
+- `[x]` Tarefa 49: Atualizar o botão de download no `sidepanel.js` para exportação direta de relatórios no formato `.txt` ("Baixar relatório (.txt)").
+- `[x]` Tarefa 50: Adicionar testes de integração automatizados na suíte para verificação das APIs do Google Docs/Sheets e conversão de relatórios `.txt`.
+
 ### Sprint 17 — Remediação dos Achados de Segurança, Arquitetura & Conformidade MV3 (v8)
 - `[x]` Tarefa 51 (Bloqueante): Implementar verificação criptográfica do Token OAuth do Google no `Code.gs` (`SEC-01`).
 - `[x]` Tarefa 52 (Bloqueante): Restringir permissões de host no `manifest.json` removendo o escopo irrestrito `<all_urls>` (`SEC-02`).
@@ -179,6 +187,7 @@ Este documento reúne o planejamento de entregas do **Assistente do Jorge**, inc
 - `[x]` Tarefa 54: Adicionar filtro de frames invisíveis e `MutationObserver` no `content.js` para suporte resiliente a SPAs (`FE-01` e `ARCH-02`).
 - `[x]` Tarefa 55: Modularizar componentes em `src/` e tratar fontes CID/CMap no parser de PDF (`ARCH-01` e `ARCH-03`).
 - `[x]` Tarefa 56: Atualizar a suíte de testes com 59 verificações aprovadas com 100% de sucesso.
+
 
 
 
