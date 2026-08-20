@@ -29,11 +29,11 @@ Assistente analítico inteligente para o Google Chrome que utiliza a API do **Go
 
 ## 📦 Pacote para Produção (Chrome Web Store)
 
-Para gerar o arquivo `.zip` pronto para submissão no Chrome Developer Dashboard:
+Para gerar o arquivo `.zip` otimizado e pronto para submissão no Chrome Developer Dashboard (conforme as diretrizes da Google):
 ```bash
-zip -r assistente-jorge-extension-v7.zip manifest.json background.js content.js popup.html popup.css popup.js sidepanel.html sidepanel.css sidepanel.js icons/ lib/ -x "*.DS_Store"
+./scripts/package.sh
 ```
-O pacote compilado é gerado como `assistente-jorge-extension-v7.zip` na raiz do projeto.
+O pacote compilado é gerado automaticamente na pasta `backups/` com o versionamento correspondente ao `manifest.json`.
 
 ---
 

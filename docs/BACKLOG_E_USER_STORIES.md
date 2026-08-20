@@ -1,6 +1,11 @@
 # 📋 Gestão de Produto: Backlog de Sprints & User Stories
 
-Este documento reúne o planejamento de entregas do **Assistente do Jorge**, incluindo as **Histórias de Usuário (User Stories)** e o **Quadro de Tarefas das Sprints 1 a 12**.
+| Versão | Data | Autor | Descrição da Alteração |
+| :--- | :--- | :--- | :--- |
+| **v1.0** | 28/07/2026 | Jader Brito | Estruturação inicial do backlog e histórias de usuário (Sprints 1 a 12). |
+| **v2.0** | 04/08/2026 | Jader Brito | Adição das Sprints 13 a 15 (OCR, Supabase e consolidação v7). |
+| **v2.1** | 11/08/2026 | Jader Brito | Adição das Sprints 16 e 17 (Google Docs/Sheets, TXT formatado e remediações de segurança v8). |
+| **v2.2** | 18/08/2026 | Jader Brito | Registro da US-10 e Sprint 18 (Bugfix da captura indevida de botões de relatório e restauração do filtro preciso de anexos). |
 
 ---
 
@@ -93,6 +98,16 @@ Este documento reúne o planejamento de entregas do **Assistente do Jorge**, inc
   - Substituir o botão e a extensão de download na interface de `.md` para `.txt` ("Baixar relatório (.txt)").
   - Converter dinamicamente marcas de Markdown (# H1, ## H2, ### H3, **negrito**, tabelas) em texto formatado com bordas (`===`, `---`, `►`), alinhamento de colunas e caixas ASCII.
   - Adicionar cabeçalho e rodapé padronizados do relatório com data de geração e identificador oficial do Assistente do Jorge.
+
+### 🔹 US-10: Restauração da Detecção Precisa de Anexos em Grids e Supressão de Ações Globais/Relatórios
+* **Como** usuário auditando ou analisando processos e formulários com grids de anexos,
+* **Quero** que o painel de Arquivos da Página capture estritamente os links e botões de download dos arquivos anexos reais da tabela/grid da página (como nas versões v1 a v6),
+* **Para que** botões de ação globais do sistema (como "Relatório Preliminar", "Relatório Definitivo", "Salvar", "Voltar") não apareçam indevidamente na grid de arquivos para download nem poluam o contexto da análise.
+* **Critérios de Aceite**:
+  - Remover termos genéricos de relatórios/ações globais (`relat[oó]rio`, `gerar`, `imprimir`) de `FILE_KEYWORDS_REGEX` no `content.js`.
+  - Excluir explicitamente botões de ação e navegação de frameworks corporativos (PrimeFaces/ASP.NET) que não correspondam a arquivos reais anexados.
+  - Priorizar e restringir a identificação aos elementos contidos em linhas de tabelas/grids de anexos (`tr`, `.ui-datatable`, `[role="row"]`) ou com extensões de arquivos explícitas (`.pdf`, `.docx`, `.xlsx`, `.zip`, etc.).
+  - Restaurar o comportamento original das versões anteriores onde apenas anexos legítimos em tela eram detectados e disponibilizados para download e montagem de contexto.
 
 ---
 
@@ -187,6 +202,12 @@ Este documento reúne o planejamento de entregas do **Assistente do Jorge**, inc
 - `[x]` Tarefa 54: Adicionar filtro de frames invisíveis e `MutationObserver` no `content.js` para suporte resiliente a SPAs (`FE-01` e `ARCH-02`).
 - `[x]` Tarefa 55: Modularizar componentes em `src/` e tratar fontes CID/CMap no parser de PDF (`ARCH-01` e `ARCH-03`).
 - `[x]` Tarefa 56: Atualizar a suíte de testes com 59 verificações aprovadas com 100% de sucesso.
+
+### Sprint 18 — Correção da Detecção de Anexos em Tela e Supressão de Botões de Ação Globais (v8.1 / Bugfix)
+- `[ ]` Tarefa 57 (Bug): Remover o termo `relat[oó]rio` de `FILE_KEYWORDS_REGEX` e eliminar captura indevida de botões de emissão de relatórios e ações de toolbar em `content.js`.
+- `[ ]` Tarefa 58 (Correção): Restringir a Estratégia 3 (botões PrimeFaces/ASP.NET) para exigir vínculo estrito a linhas de tabela de anexos (`tr`, `.ui-datatable-data`) ou nomes com extensões válidas.
+- `[ ]` Tarefa 59 (Melhoria): Adicionar lista de exclusão explícita para ações de sistema ("relatório preliminar", "relatório definitivo", "salvar", "voltar", "cancelar", "imprimir").
+- `[ ]` Tarefa 60 (Testes): Adicionar testes automatizados na suíte garantindo que links legítimos de anexos sejam capturados e ações de sistema/relatórios sejam ignoradas.
 
 
 

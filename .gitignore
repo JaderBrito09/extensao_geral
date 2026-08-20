@@ -24,3 +24,11 @@ docs/SETUP_E_INFRAESTRUTURA.md
 # Configurações locais e habilidades de agente (.gemini)
 .gemini/
 
+
+# Pasta isolada do Mira e apresentacoes
+mira_apresentacoes/
+
+# Artefatos de engenharia reversa e estudos
+_reversa_sdd/
+.reversa/
+
