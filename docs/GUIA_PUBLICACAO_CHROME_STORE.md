@@ -85,8 +85,11 @@ Cole a URL do raw do arquivo no GitHub:
 * **`downloads`**:
   > `Utilizada para realizar o download automático de documentos anexados na página ativa (.pdf, .txt, .csv, .json) para leitura e análise a pedido do usuário.`
 
-* **Permissão de Host (`host_permissions` / `<all_urls>`, `script.google.com`, `github.com`)**:
-  > `Necessária para extrair o texto de páginas web acessadas voluntariamente pelo usuário, comunicar-se com o gateway proxy do servidor no Google Apps Script e baixar o catálogo de habilidades do GitHub.`
+* **`activeTab`**:
+  > `O 'Assistente do Jorge' opera como um assistente analítico para a página web que o usuário está visitando. A permissão activeTab é essencial para que a extensão possa, mediante a interação explícita do usuário (ao abrir o painel lateral e enviar uma pergunta), acessar temporariamente e ler o conteúdo textual (DOM) da aba ativa. Este conteúdo é usado exclusivamente para fornecer contexto à inteligência artificial e responder à pergunta do usuário sobre aquela página específica. A permissão não concede acesso a abas em segundo plano e a leitura do conteúdo só ocorre quando a extensão é ativamente utilizada pelo usuário, garantindo a privacidade e o controle total do mesmo.`
+
+* **Permissão de Host (`host_permissions`: `http://*/*`, `https://*/*`)**:
+  > `Necessária para que a permissão "scripting" possa injetar o script de extração de conteúdo em qualquer página web que o usuário decida analisar. A permissão é usada em conjunto com "activeTab" e só concede acesso à página quando o usuário interage ativamente com a extensão.`
 
 ---
 

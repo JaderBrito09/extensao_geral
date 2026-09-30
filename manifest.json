@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Assistente do Jorge",
-  "version": "8",
+  "version": "9.3.4",
   "description": "Assistente analítico inteligente baseado em IA, com extração universal de arquivos/downloads em páginas web.",
   "icons": {
     "16": "icons/icon16.png",
@@ -14,7 +14,8 @@
     "scripting",
     "storage",
     "downloads",
-    "identity"
+    "identity",
+    "activeTab"
   ],
   "oauth2": {
     "client_id": "1030154870179-60e6j1amgkpn2apsj5i0nf6lurs58k54.apps.googleusercontent.com",
@@ -24,22 +25,12 @@
     ]
   },
   "host_permissions": [
-    "https://script.google.com/*",
-    "https://raw.githubusercontent.com/*",
-    "https://www.googleapis.com/*",
-    "https://oauth2.googleapis.com/*"
+    "http://*/*",
+    "https://*/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
-  "content_scripts": [
-    {
-      "matches": ["http://*/*", "https://*/*"],
-      "js": ["content.js"],
-      "run_at": "document_idle",
-      "all_frames": true
-    }
-  ],
   "action": {
     "default_title": "Abrir Assistente do Jorge",
     "default_icon": {
@@ -50,5 +41,15 @@
   },
   "side_panel": {
     "default_path": "sidepanel.html"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/sidepanel/*.js",
+        "lib/*.js",
+        "sidepanel.html"
+      ],
+      "use_dynamic_url": true
+    }
+  ]
 }

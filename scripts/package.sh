@@ -34,9 +34,9 @@ zip -r "$DEST_ZIP" \
   content.js \
   sidepanel.html \
   sidepanel.css \
-  sidepanel.js \
   icons/ \
   lib/ \
+  src/ \
   -x "*.DS_Store" \
   -x "*__MACOSX*" \
   -x "*.git*" \

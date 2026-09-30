@@ -6,6 +6,7 @@
 | **v2.0** | 04/08/2026 | Jader Brito | Adição das Sprints 13 a 15 (OCR, Supabase e consolidação v7). |
 | **v2.1** | 11/08/2026 | Jader Brito | Adição das Sprints 16 e 17 (Google Docs/Sheets, TXT formatado e remediações de segurança v8). |
 | **v2.2** | 18/08/2026 | Jader Brito | Registro da US-10 e Sprint 18 (Bugfix da captura indevida de botões de relatório e restauração do filtro preciso de anexos). |
+| **v2.3** | 29/09/2026 | Jader Brito | Registro da US-11 e Sprint 19 (Restauração de Permissões MV3: activeTab e host_permissions globais para injeção e leitura de páginas externas no Side Panel). |
 
 ---
 
@@ -109,9 +110,42 @@
   - Priorizar e restringir a identificação aos elementos contidos em linhas de tabelas/grids de anexos (`tr`, `.ui-datatable`, `[role="row"]`) ou com extensões de arquivos explícitas (`.pdf`, `.docx`, `.xlsx`, `.zip`, etc.).
   - Restaurar o comportamento original das versões anteriores onde apenas anexos legítimos em tela eram detectados e disponibilizados para download e montagem de contexto.
 
+### 🔹 US-11: Restauração da Permissão de Injeção e Leitura de Páginas Ativas (MV3 host_permissions & activeTab)
+* **Como** usuário analisando itens e processos em portais e sistemas governamentais/externos (ex: gestaoparcerias.sistema.gov.br),
+* **Quero** que o Side Panel da extensão execute a extração limpa do DOM da aba ativa sem bloqueios de segurança do navegador,
+* **Para que** o Assistente do Jorge capture o texto do item em tela e a IA realize a validação sem reportar diagnóstico de conteúdo restrito/vazio com 0 caracteres lidos.
+* **Critérios de Aceite**:
+  - Declarar `"activeTab"` na lista de `permissions` no `manifest.json`.
+  - Declarar `"http://*/*"` e `"https://*/*"` em `host_permissions` no `manifest.json` para autorizar a injeção via `chrome.scripting.executeScript` em qualquer página ativa navegada pelo usuário.
+  - Adicionar log explicativo e tratamento de exceção resiliente no `sidepanel.js` caso a injeção de script falhe.
+  - Assegurar que a suíte de testes valide as permissões requeridas para extração no Manifest V3.
+
+### 🔹 US-12: Modularização do Código-Fonte do Side Panel
+* **Como** desenvolvedor da equipe de manutenção,
+* **Quero** que a lógica do arquivo monolítico `sidepanel.js` seja refatorada e dividida em módulos com responsabilidades únicas (ex: `auth.js`, `ui.js`, `api.js`, `skillsManager.js`),
+* **Para que** a base de código se torne mais legível, sustentável, fácil de depurar e aberta a contribuições futuras.
+
+### 🔹 US-13: Reforço de Segurança contra XSS e Separação UI/Lógica
+* **Como** usuário da extensão,
+* **Quero** que a interface do chat renderize respostas da IA e outros conteúdos dinâmicos de forma segura, sem o uso direto de `innerHTML`,
+* **Para que** a extensão seja resiliente a ataques de Cross-Site Scripting (XSS) e o fluxo de dados entre a lógica e a interface seja mais claro e previsível.
+
+### 🔹 US-14: Central de Notificações da Interface do Usuário
+* **Como** usuário do assistente,
+* **Quero** receber feedback visual claro e amigável (notificações ou "toasts") dentro do Side Panel quando ocorrerem erros (ex: falha de rede, API indisponível, erro de autenticação),
+* **Para que** eu possa entender o que aconteceu e como proceder, em vez de encontrar uma interface que falha silenciosamente.
+
+### 🔹 TD-01: Otimização da Injeção de `content.js`
+* **Dívida Técnica:** O `content.js` é atualmente injetado em todas as páginas (`<all_urls>`) em `document_idle`, o que pode ser ineficiente se sua única função for responder a mensagens sob demanda.
+* **Ação de Remediação:** Investigar o `content.js`. Se ele for reativo (apenas responde a chamadas), converter sua injeção para programática (`chrome.scripting.executeScript`) apenas quando uma funcionalidade específica for ativada pelo usuário no Side Panel.
+
+### 🔹 TD-02: Refatoração da Suíte de Testes para Arquitetura Modular
+* **Dívida Técnica:** A suíte de testes em `tests/test.js` está obsoleta e depende do arquivo `sidepanel.js`, que foi removido. Os testes atualmente não são executáveis.
+* **Ação de Remediação:** Refatorar `tests/test.js` para usar importações de módulos (requer configuração para `type: "module"` ou `require` de `.cjs`). Os testes devem importar as unidades lógicas diretamente de `src/sidepanel/auth.js`, `src/sidepanel/chat.js`, etc., em vez de ler o código-fonte como texto.
+
 ---
 
-## 📅 Quadro de Acompanhamento de Sprints (1 a 16)
+## 📅 Quadro de Acompanhamento de Sprints (1 a 20)
 
 ### Sprint 1 — Fundação do Projeto e Estrutura MV3
 - `[x]` Tarefa 1: Criar arquivo `manifest.json` com Manifest V3
@@ -208,6 +242,20 @@
 - `[ ]` Tarefa 58 (Correção): Restringir a Estratégia 3 (botões PrimeFaces/ASP.NET) para exigir vínculo estrito a linhas de tabela de anexos (`tr`, `.ui-datatable-data`) ou nomes com extensões válidas.
 - `[ ]` Tarefa 59 (Melhoria): Adicionar lista de exclusão explícita para ações de sistema ("relatório preliminar", "relatório definitivo", "salvar", "voltar", "cancelar", "imprimir").
 - `[ ]` Tarefa 60 (Testes): Adicionar testes automatizados na suíte garantindo que links legítimos de anexos sejam capturados e ações de sistema/relatórios sejam ignoradas.
+
+### Sprint 19 — Restauração de Permissões de Leitura do DOM e activeTab no Manifest V3
+- `[ ]` Tarefa 61 (Permissão): Adicionar permissão `"activeTab"` no array de `permissions` do `manifest.json`.
+- `[ ]` Tarefa 62 (Permissão): Adicionar `"http://*/*"` e `"https://*/*"` em `host_permissions` no `manifest.json` para autorizar `chrome.scripting.executeScript` na extração de DOM em sites externos (ex: gestaoparcerias.sistema.gov.br).
+- `[ ]` Tarefa 63 (Tratamento de Erro): Adicionar log explicativo e tratamento de exceção descritivo em `sidepanel.js` ao executar `chrome.scripting.executeScript`.
+- `[ ]` Tarefa 64 (Testes): Adicionar testes automatizados na suíte validando a presença de `activeTab` e `host_permissions` globais no `manifest.json`.
+
+### Sprint 20 — Refatoração Estratégica e Dívidas Técnicas
+- `[ ]` Tarefa 65 (Refatoração): Criar estrutura de diretórios `src/sidepanel/` com arquivos modulares (`auth.js`, `ui.js`, `api.js`, `skills.js`, `files.js`, `main.js`).
+- `[ ]` Tarefa 66 (Refatoração): Migrar a lógica de autenticação (OAuth, validação de proxy) de `sidepanel.js` para `src/sidepanel/auth.js`.
+- `[ ]` Tarefa 67 (Refatoração): Isolar toda a manipulação direta do DOM (ex: `document.getElementById`, `element.appendChild`) em `src/sidepanel/ui.js`.
+- `[ ]` Tarefa 68 (Segurança): Substituir todas as instâncias de `innerHTML` por métodos seguros como `textContent` ou `createElement`, e integrar `DOMPurify` para sanitizar respostas de IA antes da renderização.
+- `[ ]` Tarefa 69 (UX): Implementar um componente de notificação em `ui.js` para exibir mensagens de erro da API ou de operações falhas.
+- `[ ]` Tarefa 70 (Otimização): Analisar `content.js` e, se confirmado como reativo, remover sua declaração do `manifest.json` e convertê-lo para injeção programática sob demanda.
 
 
 
