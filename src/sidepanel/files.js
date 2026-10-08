@@ -356,7 +356,7 @@ function extractCleanDOMText() {
         const hasMainOrArticle = clone.querySelector('main, article') !== null;
         const noiseSelectors = [
             'script', 'style', 'noscript', 'svg',
-            'button', 'input[type="button"]', 'input[type="submit"]',
+            'button', 'input[type="button"]', 'input[type="submit"]', 'input[type="reset"]',
             '.btn', '.button', '.noprint', '[aria-hidden="true"]'
         ];
 
@@ -367,6 +367,54 @@ function extractCleanDOMText() {
         noiseSelectors.forEach(selector => {
             clone.querySelectorAll(selector).forEach(el => el.remove());
         });
+
+        // Leitura e anotação rica de campos de formulário (inputs, textareas, selects)
+        try {
+            const realInputs = Array.from(root.querySelectorAll('input:not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="password"]), textarea, select'));
+            const cloneInputs = Array.from(clone.querySelectorAll('input:not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="password"]), textarea, select'));
+
+            cloneInputs.forEach((cloneEl, index) => {
+                const realEl = realInputs[index];
+                const tagName = cloneEl.tagName.toLowerCase();
+                let annotation = '';
+
+                if (tagName === 'textarea') {
+                    const val = (realEl ? realEl.value : cloneEl.value || cloneEl.textContent || '').trim();
+                    if (val) annotation = ` [Texto/Justificativa: "${val}"] `;
+                } else if (tagName === 'select') {
+                    let selectedText = '';
+                    if (realEl && realEl.selectedIndex >= 0 && realEl.options[realEl.selectedIndex]) {
+                        selectedText = realEl.options[realEl.selectedIndex].text.trim();
+                    } else {
+                        const selOpt = cloneEl.querySelector('option[selected]');
+                        selectedText = selOpt ? selOpt.textContent.trim() : '';
+                    }
+                    if (selectedText) annotation = ` [Opção selecionada: "${selectedText}"] `;
+                } else if (tagName === 'input') {
+                    const type = (cloneEl.getAttribute('type') || 'text').toLowerCase();
+                    if (type === 'checkbox' || type === 'radio') {
+                        const isChecked = realEl ? realEl.checked : cloneEl.hasAttribute('checked');
+                        if (isChecked) {
+                            const labelText = cloneEl.labels?.[0]?.textContent?.trim() || cloneEl.getAttribute('aria-label') || '';
+                            annotation = ` [Marcado: Sim${labelText ? ' - ' + labelText : ''}] `;
+                        }
+                    } else {
+                        const val = (realEl ? realEl.value : cloneEl.getAttribute('value') || '').trim();
+                        if (val) {
+                            const placeholder = cloneEl.getAttribute('placeholder') || '';
+                            annotation = ` [Valor: "${val}"${placeholder ? ' (campo: ' + placeholder + ')' : ''}] `;
+                        }
+                    }
+                }
+
+                if (annotation && cloneEl.parentNode) {
+                    const textNode = document.createTextNode(annotation);
+                    cloneEl.parentNode.replaceChild(textNode, cloneEl);
+                }
+            });
+        } catch (formErr) {
+            // Em caso de variação no DOM, segue com o clone normal
+        }
 
         clone.querySelectorAll('a[href]').forEach(a => {
             const href = a.getAttribute('href');

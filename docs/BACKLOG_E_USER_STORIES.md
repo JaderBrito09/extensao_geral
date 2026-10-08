@@ -310,6 +310,7 @@
 - `[x]` Tarefa 80 (Preservação): Excluir a tag `form` da lista de filtros para manter íntegras as telas do Gestaopublicagov.br e sistemas JSF/PrimeFaces.
 - `[x]` Tarefa 81 (Resiliência): Adicionar tratamento de fallback (allFrames vs top-frame) e sanitização de retorno em `extrairConteudoDaPagina()`.
 - `[x]` Tarefa 82 (Testes): Garantir que a suíte de testes automatizados valide a extração com tags de formulário preservadas.
+- `[x]` Tarefa 83 (Enriquecimento): Implementar leitura profunda de campos de formulário (`input`, `textarea`, `select`, `checkbox`) com anotações semânticas de valores preenchidos.
 
 
 
