@@ -347,44 +347,85 @@ function removeAttachedFile(fileName) {
     renderAttachedFilesUI(attachedFiles, removeAttachedFile);
 }
 
-function removeSuperfluousContent(doc) {
-    doc.querySelectorAll('script, style, nav, footer, aside, form, noscript, iframe, header, .noprint, [aria-hidden="true"]').forEach(el => el.remove());
-    return doc;
-}
-
-function extractMainContentText(doc) {
-    const main = doc.querySelector('main');
-    if (main) return main.innerText;
-    const article = doc.querySelector('article');
-    if (article) return article.innerText;
-    return doc.body ? doc.body.innerText : '';
-}
-
 function extractCleanDOMText() {
-    const docClone = document.cloneNode(true);
-    const cleanedDoc = removeSuperfluousContent(docClone);
-    const text = extractMainContentText(cleanedDoc);
-    return text.replace(/\s\s+/g, ' ').trim();
+    try {
+        const root = document.body || document.documentElement;
+        if (!root) return '';
+
+        const clone = root.cloneNode(true);
+        const hasMainOrArticle = clone.querySelector('main, article') !== null;
+        const noiseSelectors = [
+            'script', 'style', 'noscript', 'svg',
+            'button', 'input[type="button"]', 'input[type="submit"]',
+            '.btn', '.button', '.noprint', '[aria-hidden="true"]'
+        ];
+
+        if (hasMainOrArticle) {
+            noiseSelectors.push('nav', 'header', 'footer');
+        }
+
+        noiseSelectors.forEach(selector => {
+            clone.querySelectorAll(selector).forEach(el => el.remove());
+        });
+
+        clone.querySelectorAll('a[href]').forEach(a => {
+            const href = a.getAttribute('href');
+            if (href && !href.startsWith('javascript:') && !href.startsWith('#')) {
+                const text = a.textContent.trim();
+                if (text && !text.includes(href)) {
+                    a.textContent = `${text} (${href})`;
+                }
+            }
+        });
+
+        const targetNode = hasMainOrArticle ? (clone.querySelector('main, article') || clone) : clone;
+        const text = targetNode.innerText || targetNode.textContent || '';
+        return text.replace(/\s+/g, ' ').trim();
+    } catch (err) {
+        return (document.body ? (document.body.innerText || document.body.textContent || '') : '').replace(/\s+/g, ' ').trim();
+    }
 }
 
 export async function extrairConteudoDaPagina() {
     try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (!tab || !tab.url || tab.url.startsWith('chrome://')) return "";
+        if (!tab || !tab.id || !tab.url) return "";
+        if (tab.url.startsWith('chrome://') || tab.url.startsWith('edge://') || tab.url.startsWith('about:')) return "";
 
         if (tab.url.includes('docs.google.com/document') || tab.url.includes('docs.google.com/spreadsheets')) {
           const googleExtracted = await extrairConteudoGoogleDocOuSheet(tab.url);
           if (googleExtracted) return googleExtracted;
         }
 
-        const results = await chrome.scripting.executeScript({
-            target: { tabId: tab.id, allFrames: true },
-            func: extractCleanDOMText
-        });
-        return (results || []).map(r => r.result).join('\n\n').trim();
+        let results = null;
+        try {
+            results = await chrome.scripting.executeScript({
+                target: { tabId: tab.id, allFrames: true },
+                func: extractCleanDOMText
+            });
+        } catch (frameErr) {
+            console.warn("[Files] Falha ao extrair com allFrames, tentando frame principal:", frameErr);
+        }
+
+        let validTexts = (results || [])
+            .map(r => r.result)
+            .filter(t => typeof t === 'string' && t.trim().length > 0);
+
+        if (validTexts.length === 0) {
+            const mainResults = await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: extractCleanDOMText
+            }).catch(() => []);
+
+            validTexts = (mainResults || [])
+                .map(r => r.result)
+                .filter(t => typeof t === 'string' && t.trim().length > 0);
+        }
+
+        return validTexts.join('\n\n').trim();
     } catch (err) {
-        console.error("Erro ao extrair conteúdo da página:", err);
-        return "[Não foi possível extrair o conteúdo da página]";
+        console.error("[Files] Erro ao extrair conteúdo da página:", err);
+        return "";
     }
 }
 

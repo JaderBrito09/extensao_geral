@@ -9,6 +9,7 @@
 | **v2.3** | 29/09/2026 | Jader Brito | Registro da US-11 e Sprint 19 (Restauração de Permissões MV3: activeTab e host_permissions globais para injeção e leitura de páginas externas no Side Panel). |
 | **v2.4** | 30/09/2026 | Jader Brito | Registro da US-15 e Sprint 21 (v9.3.5: Parser nativo de prompts interativos/cards e resiliência de e-mail/sessão no payload). |
 | **v2.5** | 08/10/2026 | Jader Brito | Registro da US-16 e Sprint 22 (v9.3.6: Execução dinâmica de contexto de boas-vindas do Validador IMGG e supressão de prompt transcrito). |
+| **v2.6** | 08/10/2026 | Jader Brito | Registro da US-17 e Sprint 23 (Autonomia e resiliência na extração de DOM: escopo autocontido, preservação de formulários e suporte a SPAs governamentais). |
 
 ---
 
@@ -160,6 +161,16 @@
   - `appendMessageUI` deve aceitar a flag `isWelcomeMessage` para suprimir a criação do botão de download de relatório (.txt) em saudações e acolhimentos.
   - Eliminar qualquer transcrição de regras procedimentais ("Antes de apresentar as opções...", "Caso 1: ...", "Caso 2: ...") direcionadas ao modelo.
 
+### 🔹 US-17: Autonomia e Resiliência na Extração de DOM Sanitizada da Aba Ativa (v9.3.7)
+* **Como** usuário solicitando validação ou análise de páginas ativas no portal Gestaopublicagov.br ou outros sistemas web,
+* **Quero** que a extensão extraia com sucesso todo o conteúdo textual legível da aba ativa em tempo real sem falhas silenciosas de script,
+* **Para que** a tag `<conteudo_pagina>` contenha dados completos e a IA consiga realizar a análise preliminar dos requisitos sem relatar ausência de conteúdo.
+* **Critérios de Aceite**:
+  - A função `extractCleanDOMText` injetada via `chrome.scripting.executeScript` deve ser 100% autocontida, sem referências a funções externas de módulo (`removeSuperfluousContent`, `extractMainContentText`), eliminando o erro de runtime `ReferenceError`.
+  - A lista de exclusão de elementos ruidosos NÃO deve remover a tag `<form>`, garantindo preservação integral de telas corporativas e governamentais baseadas em JSF/PrimeFaces/ASP.NET.
+  - Implementar fallback resiliente: se a extração com `allFrames: true` falhar ou retornar vazia devido a restrições de sandbox/CSP de frames terceiros, tentar automaticamente a extração do top-frame principal.
+  - Sanitizar os resultados de injeção concatenando segmentos válidos e garantindo que o texto real da página chegue até `<conteudo_pagina>`.
+
 ### 🔹 TD-01: Otimização da Injeção de `content.js`
 * **Dívida Técnica:** O `content.js` é atualmente injetado em todas as páginas (`<all_urls>`) em `document_idle`, o que pode ser ineficiente se sua única função for responder a mensagens sob demanda.
 * **Ação de Remediação:** Investigar o `content.js`. Se ele for reativo (apenas responde a chamadas), converter sua injeção para programática (`chrome.scripting.executeScript`) apenas quando uma funcionalidade específica for ativada pelo usuário no Side Panel.
@@ -293,6 +304,12 @@
 - `[x]` Tarefa 76 (Interface): Apresentação contextualizada do Caso 1 (no portal) e Caso 2 (fora do portal) com cards interativos nativos.
 - `[x]` Tarefa 77 (UX/Segurança): Supressão da injeção do botão de download de relatório (.txt) em mensagens de boas-vindas (`isWelcomeMessage`).
 - `[x]` Tarefa 78 (Qualidade): Eliminação de transcrições de diretrizes de sistema da IA na tela do usuário.
+
+### Sprint 23 — Autonomia e Resiliência na Extração de DOM Sanitizada da Aba Ativa (v9.3.7)
+- `[x]` Tarefa 79 (Injeção): Tornar `extractCleanDOMText` 100% autocontida sem referências a funções de escopo externo de módulo em `files.js`.
+- `[x]` Tarefa 80 (Preservação): Excluir a tag `form` da lista de filtros para manter íntegras as telas do Gestaopublicagov.br e sistemas JSF/PrimeFaces.
+- `[x]` Tarefa 81 (Resiliência): Adicionar tratamento de fallback (allFrames vs top-frame) e sanitização de retorno em `extrairConteudoDaPagina()`.
+- `[x]` Tarefa 82 (Testes): Garantir que a suíte de testes automatizados valide a extração com tags de formulário preservadas.
 
 
 
