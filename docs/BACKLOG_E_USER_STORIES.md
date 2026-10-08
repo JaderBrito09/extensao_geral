@@ -7,6 +7,8 @@
 | **v2.1** | 11/08/2026 | Jader Brito | Adição das Sprints 16 e 17 (Google Docs/Sheets, TXT formatado e remediações de segurança v8). |
 | **v2.2** | 18/08/2026 | Jader Brito | Registro da US-10 e Sprint 18 (Bugfix da captura indevida de botões de relatório e restauração do filtro preciso de anexos). |
 | **v2.3** | 29/09/2026 | Jader Brito | Registro da US-11 e Sprint 19 (Restauração de Permissões MV3: activeTab e host_permissions globais para injeção e leitura de páginas externas no Side Panel). |
+| **v2.4** | 30/09/2026 | Jader Brito | Registro da US-15 e Sprint 21 (v9.3.5: Parser nativo de prompts interativos/cards e resiliência de e-mail/sessão no payload). |
+| **v2.5** | 08/10/2026 | Jader Brito | Registro da US-16 e Sprint 22 (v9.3.6: Execução dinâmica de contexto de boas-vindas do Validador IMGG e supressão de prompt transcrito). |
 
 ---
 
@@ -135,6 +137,29 @@
 * **Quero** receber feedback visual claro e amigável (notificações ou "toasts") dentro do Side Panel quando ocorrerem erros (ex: falha de rede, API indisponível, erro de autenticação),
 * **Para que** eu possa entender o que aconteceu e como proceder, em vez de encontrar uma interface que falha silenciosamente.
 
+### 🔹 US-15: Parser Nativo de Prompts Interativos (Cards) e Resiliência de Identidade no Payload (v9.3.5)
+* **Como** usuário selecionando habilidades analíticas com questionários ou opções guiadas (ex: Análise e Consulta Livre),
+* **Quero** que as opções de ação sejam renderizadas diretamente como botões interativos e que minhas perguntas sejam enviadas com minha identificação autenticada garantida,
+* **Para que** a interface não exiba blocos JSON crus desestruturados e a API do Proxy Gateway não rejeite minhas requisições por ausência de e-mail no payload.
+* **Critérios de Aceite**:
+  - `appendMessageUI` deve interceptar blocos de código ```` ```json ```` do tipo `interactive_prompt`, extraindo o JSON e renderizando botões interativos via `renderizarCardInterativo`.
+  - O texto introdutório da orientação da habilidade deve ser formatado via `marked.parse` e sanitizado via `DOMPurify`.
+  - Os botões interativos do card devem preencher automaticamente a caixa de entrada ou acionar diretamente o pipeline de envio da consulta.
+  - O e-mail do usuário logado deve ser recuperado de forma assíncrona e defensiva (`obterUsuarioAtual`) e enviado obrigatoriamente no campo `userEmail` do payload.
+  - Adicionar barreira client-side amigável solicitando autenticação se o usuário não estiver logado antes de enviar ao Proxy.
+  - Extrair o texto de respostas da API a partir de `data.candidates[0].content.parts[0].text` ou `data.response`.
+
+### 🔹 US-16: Execução Dinâmica de Contexto de Boas-Vindas e Supressão de Prompt Transcrito (v9.3.6)
+* **Como** usuário abrindo o Side Panel do Assistente do Jorge com a Habilidade do Validador IMGG 100 Pontos ativa,
+* **Quero** receber uma saudação inteligente e contextualizada com base na aba em que estou navegando (Caso 1 no Gestaopublicagov.br ou Caso 2 fora do portal) com opções interativas prontas,
+* **Para que** a extensão execute a lógica de negócio do assistente em vez de transcrever cruamente as instruções procedimentais de prompt da IA, e sem exibir indevidamente botões de download de relatório (.txt) nas mensagens de acolhimento.
+* **Critérios de Aceite**:
+  - `inicializarAgenteUnico` deve inspecionar assincronamente a URL da aba ativa (`chrome.tabs.query`).
+  - Se a URL contiver `gestaoparcerias.sistema.gov.br` ou `treinamentoparcerias.sistema.gov.br`, exibir a mensagem contextualizada do Caso 1 com atalhos de validação rápida.
+  - Se a URL não pertencer ao portal, exibir a mensagem orientadora do Caso 2 com botões interativos de "🔄 Verificar Página" e "📖 Dúvidas sobre o IMGG".
+  - `appendMessageUI` deve aceitar a flag `isWelcomeMessage` para suprimir a criação do botão de download de relatório (.txt) em saudações e acolhimentos.
+  - Eliminar qualquer transcrição de regras procedimentais ("Antes de apresentar as opções...", "Caso 1: ...", "Caso 2: ...") direcionadas ao modelo.
+
 ### 🔹 TD-01: Otimização da Injeção de `content.js`
 * **Dívida Técnica:** O `content.js` é atualmente injetado em todas as páginas (`<all_urls>`) em `document_idle`, o que pode ser ineficiente se sua única função for responder a mensagens sob demanda.
 * **Ação de Remediação:** Investigar o `content.js`. Se ele for reativo (apenas responde a chamadas), converter sua injeção para programática (`chrome.scripting.executeScript`) apenas quando uma funcionalidade específica for ativada pelo usuário no Side Panel.
@@ -256,6 +281,18 @@
 - `[ ]` Tarefa 68 (Segurança): Substituir todas as instâncias de `innerHTML` por métodos seguros como `textContent` ou `createElement`, e integrar `DOMPurify` para sanitizar respostas de IA antes da renderização.
 - `[ ]` Tarefa 69 (UX): Implementar um componente de notificação em `ui.js` para exibir mensagens de erro da API ou de operações falhas.
 - `[ ]` Tarefa 70 (Otimização): Analisar `content.js` e, se confirmado como reativo, remover sua declaração do `manifest.json` e convertê-lo para injeção programática sob demanda.
+
+### Sprint 21 — Estabilização da Modularização MV3 e Resiliência de Payload (v9.3.5)
+- `[x]` Tarefa 71 (Correção): Parser de blocos `interactive_prompt` em `appendMessageUI` e renderização de cards interativos.
+- `[x]` Tarefa 72 (Autenticação): Hidratação defensiva assíncrona de `currentUser` via `obterUsuarioAtual()` em `auth.js`.
+- `[x]` Tarefa 73 (Integração): Envio obrigatório de `userEmail` e extração de `candidates` no retorno da API em `api.js`.
+- `[x]` Tarefa 74 (Relatórios): Restauração da formatação completa de relatórios `.txt` em `files.js` e suíte com 74 testes aprovados.
+
+### Sprint 22 — Execução Dinâmica de Contexto de Boas-Vindas e Supressão de Prompt Transcrito (v9.3.6)
+- `[x]` Tarefa 75 (Lógica): Inspeção dinâmica da aba ativa em `inicializarAgenteUnico()` para detecção do portal Gestaopublicagov.br.
+- `[x]` Tarefa 76 (Interface): Apresentação contextualizada do Caso 1 (no portal) e Caso 2 (fora do portal) com cards interativos nativos.
+- `[x]` Tarefa 77 (UX/Segurança): Supressão da injeção do botão de download de relatório (.txt) em mensagens de boas-vindas (`isWelcomeMessage`).
+- `[x]` Tarefa 78 (Qualidade): Eliminação de transcrições de diretrizes de sistema da IA na tela do usuário.
 
 
 

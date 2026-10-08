@@ -1,6 +1,7 @@
 // src/sidepanel/auth.js
 import { carregarSkillsDinamicas } from './skills.js';
 import { iniciarNovaConversa } from './chat.js';
+import { validarUsuarioProxy } from './api.js';
 import { 
   mainAppScreen, loginScreen, accessDeniedScreen,
   userAvatar, userName, userEmail, googleLoginBtn, googleLogoutBtn,
@@ -8,6 +9,42 @@ import {
 } from './ui.js';
 
 export let currentUser = null;
+
+export function getCurrentUser() {
+  return currentUser;
+}
+
+export async function obterUsuarioAtual() {
+  if (currentUser?.email) return currentUser;
+  if (typeof chrome !== 'undefined' && chrome.storage?.session) {
+    try {
+      const sess = await chrome.storage.session.get('user_profile');
+      if (sess?.user_profile?.email) {
+        currentUser = sess.user_profile;
+        return currentUser;
+      }
+    } catch (e) {
+      console.warn('[Auth] Erro ao recuperar sessão do storage:', e);
+    }
+  }
+  return currentUser;
+}
+
+export function verificarPermissaoSkillUsuario(skillKey, allowedSkills = null) {
+  const skillsList = allowedSkills || currentUser?.allowed_skills || ["ALL"];
+  const normalizedAllowed = skillsList.map(s => String(s).trim().toUpperCase());
+  if (normalizedAllowed.includes("ALL") || normalizedAllowed.includes("*") || normalizedAllowed.includes("TODAS")) {
+    return { permitida: true };
+  }
+  const keyUpper = String(skillKey || "").trim().toUpperCase();
+  if (normalizedAllowed.includes(keyUpper)) {
+    return { permitida: true };
+  }
+  return {
+    permitida: false,
+    mensagem: `A Habilidade '${skillKey}' não está autorizada no seu perfil. Por favor, selecione outra.`
+  };
+}
 
 const PROXY_CONFIG = Object.freeze({
   DEFAULT_APPS_SCRIPT_ENDPOINT: "https://script.google.com/macros/s/AKfycbzjrjLaSlID5FGzx5zDoIQjJCUW-5LTImg90v6us2X3v55l0e0_UodEwv70kgbQAdTq/exec"
@@ -99,20 +136,22 @@ async function realizarLoginGoogle(interactive = true) {
     }
     const profile = await buscarPerfilUsuario(token);
     currentUser = { ...profile, token };
-    const validation = await validarUsuarioNaPlanilha(profile.email);
+    const validation = await validarUsuarioProxy(profile.email, token);
     if (!validation.authorized) {
       exibirTelaAcessoNegado(profile.email, validation.message);
       currentUser = null;
       return false;
     }
-    currentUser.allowed_skills = validation.allowed_skills;
-    await chrome.storage.session.set({ user_profile: currentUser });
-    await carregarSkillsDinamicas(currentUser.allowed_skills);
+    currentUser.allowed_skills = validation.allowed_skills || ["ALL"];
+    if (chrome.storage?.session) {
+      await chrome.storage.session.set({ user_profile: currentUser });
+    }
+    await carregarSkillsDinamicas();
     exibirPerfilLogado(currentUser);
     return true;
   } catch (err) {
     console.warn('Falha no fluxo de login:', err);
-    exibirTelaLogin();
+    if (interactive) exibirTelaLogin();
     return false;
   }
 }
@@ -120,11 +159,13 @@ async function realizarLoginGoogle(interactive = true) {
 async function realizarLogoutGoogle() {
   if (typeof chrome === 'undefined' || !chrome.identity) return;
   try {
-    const { user_profile } = await chrome.storage.session.get('user_profile');
+    const { user_profile } = (chrome.storage?.session ? await chrome.storage.session.get('user_profile') : {});
     if (user_profile?.token) {
       await new Promise(r => chrome.identity.removeCachedAuthToken({ token: user_profile.token }, r));
     }
-    await chrome.storage.session.remove('user_profile');
+    if (chrome.storage?.session) {
+      await chrome.storage.session.remove('user_profile');
+    }
     currentUser = null;
     exibirTelaLogin();
   } catch (err) {
@@ -134,7 +175,6 @@ async function realizarLogoutGoogle() {
 }
 
 async function revalidarPermissaoUsuario() {
-    // Implementação simplificada para revalidar.
     await realizarLoginGoogle(true);
 }
 
@@ -144,13 +184,17 @@ async function verificarStatusAuth() {
       return;
   }
   try {
-    const { user_profile } = await chrome.storage.session.get('user_profile');
+    let user_profile = null;
+    if (chrome.storage.session) {
+      const sess = await chrome.storage.session.get('user_profile');
+      user_profile = sess.user_profile;
+    }
     if (user_profile?.email) {
       currentUser = user_profile;
-      const validation = await validarUsuarioNaPlanilha(currentUser.email);
+      const validation = await validarUsuarioProxy(currentUser.email, currentUser.token || "");
       if (validation.authorized) {
-        currentUser.allowed_skills = validation.allowed_skills;
-        await carregarSkillsDinamicas(currentUser.allowed_skills);
+        currentUser.allowed_skills = validation.allowed_skills || ["ALL"];
+        await carregarSkillsDinamicas();
         exibirPerfilLogado(currentUser);
         return;
       }
@@ -163,8 +207,8 @@ async function verificarStatusAuth() {
 }
 
 export function initAuth() {
-  googleLoginBtn.addEventListener('click', () => realizarLoginGoogle(true));
-  googleLogoutBtn.addEventListener('click', realizarLogoutGoogle);
+  googleLoginBtn?.addEventListener('click', () => realizarLoginGoogle(true));
+  googleLogoutBtn?.addEventListener('click', realizarLogoutGoogle);
   retryAuthBtn?.addEventListener('click', revalidarPermissaoUsuario);
   deniedLogoutBtn?.addEventListener('click', realizarLogoutGoogle);
   verificarStatusAuth();

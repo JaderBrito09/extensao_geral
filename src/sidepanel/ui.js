@@ -1,4 +1,5 @@
 // src/sidepanel/ui.js
+import { converterMarkdownParaTxtFormatado } from './files.js';
 
 // Exporta referências a elementos do DOM para serem usados por outros módulos
 export const mainAppScreen = document.getElementById('main-app-screen');
@@ -22,8 +23,16 @@ export const userInputEl = document.getElementById('user-input');
 export const newChatBtn = document.getElementById('new-chat-btn');
 export const historySessionsList = document.getElementById('history-sessions-list');
 
+// Handler de clique em opção interativa configurável
+let interactiveOptionHandler = null;
+
+export function setInteractiveOptionHandler(handler) {
+    interactiveOptionHandler = handler;
+}
+
 // Função utilitária para escapar HTML e prevenir XSS
-function escapeHtml(unsafe) {
+export function escapeHtml(unsafe) {
+    if (!unsafe || typeof unsafe !== 'string') return '';
     return unsafe
          .replace(/&/g, "&amp;")
          .replace(/</g, "&lt;")
@@ -33,30 +42,157 @@ function escapeHtml(unsafe) {
 }
 
 /**
- * Adiciona uma mensagem ao histórico do chat de forma segura.
- * @param {string} htmlContent - Conteúdo HTML da mensagem (será sanitizado).
- * @param {string} className - Classe CSS para a mensagem ('user-msg' ou 'ai-msg').
- * @param {boolean} isLoading - Se a mensagem deve mostrar um indicador de carregamento.
+ * Renderiza um card interativo com botões de opção rápida
  */
-export function appendMessageUI(htmlContent, className, isLoading = false) {
+export function renderizarCardInterativo(containerEl, dadosPrompt, customCallback = null) {
+    const cardDiv = document.createElement('div');
+    cardDiv.className = 'interactive-option-card';
+
+    if (dadosPrompt.title) {
+        const titleEl = document.createElement('div');
+        titleEl.className = 'interactive-title';
+        titleEl.textContent = dadosPrompt.title;
+        cardDiv.appendChild(titleEl);
+    }
+
+    const optionsGroup = document.createElement('div');
+    optionsGroup.className = 'interactive-options-group';
+
+    (dadosPrompt.options || []).forEach((opcao, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'interactive-option-btn';
+
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'option-label';
+        labelSpan.textContent = opcao.label || opcao.text || `Opção ${idx + 1}`;
+
+        if (opcao.badge) {
+            const badgeSpan = document.createElement('span');
+            badgeSpan.className = 'option-badge';
+            badgeSpan.textContent = opcao.badge;
+            btn.appendChild(badgeSpan);
+        }
+
+        btn.appendChild(labelSpan);
+
+        btn.addEventListener('click', () => {
+            optionsGroup.querySelectorAll('.interactive-option-btn').forEach(b => {
+                b.disabled = true;
+                b.classList.add('disabled');
+            });
+            btn.classList.add('selected');
+
+            if (opcao.action === 'upload_file' || opcao.action === 'attach_file') {
+                const fileInput = document.getElementById('file-input');
+                if (fileInput) {
+                    if (opcao.accept) fileInput.setAttribute('accept', opcao.accept);
+                    else fileInput.removeAttribute('accept');
+                    fileInput.click();
+                }
+            } else {
+                const textoParaEnviar = opcao.value || opcao.label || opcao.text;
+                if (customCallback) {
+                    customCallback(textoParaEnviar);
+                } else if (interactiveOptionHandler) {
+                    interactiveOptionHandler(textoParaEnviar);
+                } else if (userInputEl) {
+                    userInputEl.value = textoParaEnviar;
+                    sendBtn?.click();
+                }
+            }
+        });
+
+        optionsGroup.appendChild(btn);
+    });
+
+    cardDiv.appendChild(optionsGroup);
+    containerEl.appendChild(cardDiv);
+}
+
+/**
+ * Adiciona uma mensagem ao histórico do chat de forma segura.
+ */
+export function appendMessageUI(content, className = 'ai-msg', isLoading = false, isWelcomeMessage = false) {
+    if (!historyEl) return null;
+
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${className}`;
 
     if (isLoading) {
         messageDiv.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+        historyEl.appendChild(messageDiv);
+        historyEl.scrollTop = historyEl.scrollHeight;
+        return messageDiv;
+    }
+
+    if (className.includes('user-msg')) {
+        messageDiv.textContent = content;
+        historyEl.appendChild(messageDiv);
+        historyEl.scrollTop = historyEl.scrollHeight;
+        return messageDiv;
+    }
+
+    const contentStr = typeof content === 'string' ? content : String(content || '');
+    const jsonMatch = contentStr.match(/```json\s*([\s\S]*?)\s*```/);
+    let parsedInteractive = null;
+
+    if (jsonMatch) {
+        try {
+            const data = JSON.parse(jsonMatch[1]);
+            if (data && data.type === 'interactive_prompt' && Array.isArray(data.options)) {
+                parsedInteractive = data;
+            }
+        } catch (e) {}
+    }
+
+    if (parsedInteractive) {
+        const textWithoutJson = contentStr.replace(/```json\s*[\s\S]*?\s*```/, '').trim();
+        if (textWithoutJson) {
+            const textContainer = document.createElement('div');
+            const parsedHtml = (typeof marked !== 'undefined') ? marked.parse(textWithoutJson) : textWithoutJson;
+            textContainer.innerHTML = (typeof DOMPurify !== 'undefined') ? DOMPurify.sanitize(parsedHtml) : parsedHtml;
+            messageDiv.appendChild(textContainer);
+        }
+        renderizarCardInterativo(messageDiv, parsedInteractive);
     } else {
-        // Sanitize o conteúdo HTML antes de inseri-lo no DOM
-        messageDiv.innerHTML = DOMPurify.sanitize(htmlContent);
+        const parsedHtml = (typeof marked !== 'undefined') ? marked.parse(contentStr) : contentStr;
+        messageDiv.innerHTML = (typeof DOMPurify !== 'undefined') ? DOMPurify.sanitize(parsedHtml) : parsedHtml;
+    }
+
+    if (className.includes('ai-msg') && !isLoading && !isWelcomeMessage && !parsedInteractive && contentStr.length > 500) {
+        const downloadFooter = document.createElement('div');
+        downloadFooter.className = 'md-download-footer';
+        
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'md-download-btn';
+        downloadBtn.title = 'Baixar este relatório em formato de texto (.txt)';
+        downloadBtn.innerHTML = '📥 <span>Baixar relatório (.txt)</span>';
+        
+        downloadBtn.addEventListener('click', () => {
+            const txtFormatted = converterMarkdownParaTxtFormatado(contentStr);
+            const blob = new Blob([txtFormatted], { type: 'text/plain;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const timestamp = new Date().toISOString().slice(0, 10);
+            a.download = `relatorio_jorge_${timestamp}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        downloadFooter.appendChild(downloadBtn);
+        messageDiv.appendChild(downloadFooter);
     }
 
     historyEl.appendChild(messageDiv);
     historyEl.scrollTop = historyEl.scrollHeight;
+    return messageDiv;
 }
 
 /**
  * Renderiza o painel de arquivos detectados na página.
- * @param {Array} files - A lista de arquivos detectados.
- * @param {Function} onDownloadClick - Callback para o clique no botão de download.
  */
 export function renderPageFilesUI(files, onDownloadClick) {
     const pageFilesList = document.getElementById('page-files-list');
@@ -97,8 +233,6 @@ export function renderPageFilesUI(files, onDownloadClick) {
 
 /**
  * Renderiza os arquivos que o usuário anexou manualmente.
- * @param {Array} files - A lista de arquivos anexados.
- * @param {Function} onRemoveClick - Callback para remover um anexo.
  */
 export function renderAttachedFilesUI(files, onRemoveClick) {
     const attachedFilesContainer = document.getElementById('attached-files-container');
@@ -111,26 +245,24 @@ export function renderAttachedFilesUI(files, onRemoveClick) {
     }
     
     attachedFilesContainer.classList.remove('hidden');
-    // A lógica de criação dos chips de anexo será adicionada aqui.
-    // Por enquanto, apenas mostra um contador.
     attachedFilesContainer.textContent = `${files.length} arquivo(s) anexado(s).`;
 }
+
 export function initUI() {
-    userInputEl.addEventListener('input', () => {
-        userInputEl.style.height = 'auto';
-        userInputEl.style.height = `${userInputEl.scrollHeight}px`;
-    });
+    if (userInputEl) {
+        userInputEl.addEventListener('input', () => {
+            userInputEl.style.height = 'auto';
+            userInputEl.style.height = `${userInputEl.scrollHeight}px`;
+        });
+    }
 }
 
 /**
  * Renderiza a lista de sessões de chat no painel de histórico.
- * @param {Array} sessions - Array de objetos de sessão do chat.
- * @param {string} activeChatId - O ID da sessão de chat ativa no momento.
- * @param {Function} onSessionClick - Callback para quando uma sessão é clicada.
- * @param {Function} onDeleteClick - Callback para quando o botão de deletar é clicado.
  */
 export function renderHistoryList(sessions, activeChatId, onSessionClick, onDeleteClick) {
-    historySessionsList.innerHTML = ''; // Limpa a lista antes de renderizar
+    if (!historySessionsList) return;
+    historySessionsList.innerHTML = '';
 
     if (!sessions || sessions.length === 0) {
         const li = document.createElement('li');
@@ -163,7 +295,7 @@ export function renderHistoryList(sessions, activeChatId, onSessionClick, onDele
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'icon-btn-sm delete-session-btn';
         deleteBtn.title = 'Excluir conversa';
-        deleteBtn.innerHTML = '🗑️'; // Ícones são seguros com innerHTML
+        deleteBtn.innerHTML = '🗑️';
         deleteBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             onDeleteClick(session.id);
@@ -178,45 +310,4 @@ export function renderHistoryList(sessions, activeChatId, onSessionClick, onDele
 
         historySessionsList.appendChild(li);
     });
-}
-
-/**
- * Renderiza um card interativo com botões de opção.
- * @param {string} title - O título do card.
- * @param {Array} options - Array de objetos de opção, ex: [{label: 'Opção 1', value: 'opt1'}].
- * @param {Function} onOptionClick - Callback executado quando uma opção é clicada.
- */
-export function renderSkillSelectionCard(title, options, onOptionClick) {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'message ai-msg';
-
-    const cardDiv = document.createElement('div');
-    cardDiv.className = 'interactive-option-card';
-
-    if (title) {
-        const titleEl = document.createElement('div');
-        titleEl.className = 'interactive-title';
-        titleEl.textContent = title;
-        cardDiv.appendChild(titleEl);
-    }
-
-    const optionsGroup = document.createElement('div');
-    optionsGroup.className = 'interactive-options-group';
-
-    options.forEach((option) => {
-        const btn = document.createElement('button');
-        btn.className = 'interactive-option-btn';
-        btn.textContent = option.label;
-        btn.addEventListener('click', () => {
-            optionsGroup.querySelectorAll('button').forEach(b => b.disabled = true);
-            btn.classList.add('selected');
-            onOptionClick(option.skillKey); // Usando skillKey como no código legado
-        });
-        optionsGroup.appendChild(btn);
-    });
-
-    cardDiv.appendChild(optionsGroup);
-    msgDiv.appendChild(cardDiv);
-    historyEl.appendChild(msgDiv);
-    historyEl.scrollTop = historyEl.scrollHeight;
 }

@@ -108,7 +108,18 @@ console.log("\n--- Testando Prompt Estrito e Gestão de Anexos (Sprint 8 & 9) --
 
 const fs = require('fs');
 const path = require('path');
-const sidepanelCode = fs.readFileSync(path.join(__dirname, '../sidepanel.js'), 'utf8');
+const sidepanelFiles = [
+  '../src/sidepanel/api.js',
+  '../src/sidepanel/auth.js',
+  '../src/sidepanel/chat.js',
+  '../src/sidepanel/files.js',
+  '../src/sidepanel/main.js',
+  '../src/sidepanel/skills.js',
+  '../src/sidepanel/ui.js',
+  '../src/services/geminiProxy.js',
+  '../src/storage/storageLock.js'
+];
+const sidepanelCode = sidepanelFiles.map(f => fs.readFileSync(path.join(__dirname, f), 'utf8')).join('\n');
 
 assert(sidepanelCode.includes('STRICT_DOCUMENT_SCOPE_PROMPT'), "Constante STRICT_DOCUMENT_SCOPE_PROMPT deve existir no sidepanel.js");
 assert(sidepanelCode.includes('A informação solicitada não consta na documentação nem nos arquivos fornecidos'), "Mensagem de solicitação de permissão externa deve estar no prompt");
